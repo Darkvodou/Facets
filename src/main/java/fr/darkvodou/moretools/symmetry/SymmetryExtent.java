@@ -67,6 +67,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     private Symmetry symmetry;
     private final int maxRange;
     private final int confirmSeconds;
+    private final SymmetrySessions sessions;
     private Answer answer = Answer.NOT_ASKED;
     private final int minY;
     private final int maxY;
@@ -77,8 +78,10 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     private int outOfRange;
     private final Actor actor;
 
-    SymmetryExtent(Extent extent, Symmetry symmetry, int maxRange, int confirmSeconds, Actor actor) {
+    SymmetryExtent(Extent extent, Symmetry symmetry, int maxRange, int confirmSeconds, Actor actor,
+                   SymmetrySessions sessions) {
         super(extent);
+        this.sessions = sessions;
         this.actor = actor;
         this.symmetry = symmetry;
         this.maxRange = maxRange;
@@ -204,6 +207,8 @@ final class SymmetryExtent extends AbstractDelegateExtent {
             if (condition.await(confirmSeconds, TimeUnit.SECONDS)) {
                 answer = Answer.CONFIRMED;
                 symmetry = symmetry.withRange(0);
+                // The player's range becomes the maximum, for the next edits too
+                sessions.update(actor.getUniqueId(), current -> current.withRange(0));
                 Messages.send(actor, "symmetry.confirmed", "max", maxRange);
             } else {
                 Messages.send(actor, "symmetry.not-confirmed", "range", range);

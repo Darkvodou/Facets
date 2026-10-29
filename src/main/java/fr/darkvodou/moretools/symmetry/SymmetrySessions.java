@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.UnaryOperator;
 
 /**
  * The symmetry of each player and the configuration. Read from FAWE's threads as well as the main one.
@@ -34,6 +35,13 @@ public final class SymmetrySessions {
 
     public void set(UUID player, Symmetry symmetry) {
         symmetries.put(player, symmetry);
+    }
+
+    /**
+     * Changes the player's symmetry, if they still have one.
+     */
+    public void update(UUID player, UnaryOperator<Symmetry> change) {
+        symmetries.computeIfPresent(player, (uuid, symmetry) -> change.apply(symmetry));
     }
 
     @Nullable
