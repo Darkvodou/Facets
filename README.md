@@ -37,6 +37,9 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 | `star3d` | `star2d` + up/down mirror | 16 |
 | `megastar` | `star3d` around all three axes | 48 |
 
+### Menu
+Right click with a nether star to open the MoreTools menu: symmetry, selections and global masks (with favorites) in a few clicks.
+
 ### `#panes` mask
 Every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
 
@@ -47,6 +50,7 @@ Every glass pane (`glass_pane` and all stained glass panes), for example `//repl
 | `moretools.loft` | Loft selection, `//loft`, `//rpos1`, `//rpos2` |
 | `moretools.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillh`, `//fuzzyfillr` |
 | `moretools.symmetry` | `//sym` |
+| `moretools.menu` | The menu (right click with a nether star) |
 | `moretools.reload` | `/moretools reload` |
 
 All of them default to operators.
