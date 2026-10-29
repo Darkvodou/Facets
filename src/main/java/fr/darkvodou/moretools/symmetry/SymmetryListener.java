@@ -73,7 +73,7 @@ public final class SymmetryListener implements Listener {
         }
         Symmetry symmetry = sessions.active(actor.getUniqueId(), event.getWorld().getName());
         if (symmetry != null && actor.hasPermission(SymmetrySessions.PERMISSION)) {
-            event.setExtent(new SymmetryExtent(event.getExtent(), symmetry, config.maxRange(), actor));
+            event.setExtent(new SymmetryExtent(event.getExtent(), symmetry, config.maxRange(), config.confirmSeconds(), actor));
         }
     }
 

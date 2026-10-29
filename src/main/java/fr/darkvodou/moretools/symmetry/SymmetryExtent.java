@@ -1,9 +1,11 @@
 package fr.darkvodou.moretools.symmetry;
 
+import com.fastasyncworldedit.core.Fawe;
 import com.fastasyncworldedit.core.extent.filter.block.ExtentFilterBlock;
 import com.fastasyncworldedit.core.queue.Filter;
 import com.fastasyncworldedit.core.queue.IQueueExtent;
 import com.fastasyncworldedit.core.util.ExtentTraverser;
+import com.fastasyncworldedit.core.util.task.InterruptableCondition;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.extension.platform.Actor;
@@ -23,10 +25,18 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import fr.darkvodou.moretools.Messages;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Copies every block an edit sets to its symmetric positions. Sits above FAWE's history, so the copies are undone
@@ -38,14 +48,26 @@ import java.util.Set;
  * when there are too many: copies jumping from chunk to chunk would get a chunk sent while it is still written to,
  * and two versions of the same chunk applied at once lose blocks. So the copies are kept by chunk, and written
  * chunk after chunk once the queue has placed the blocks of the edit.
+ * <p>
+ * When the edit goes beyond the player's range (but not the configured maximum), it waits for FAWE's //confirm
+ * to copy up to the maximum: before placing anything for a region, at the first block too far otherwise.
  */
 final class SymmetryExtent extends AbstractDelegateExtent {
 
     // Copies kept before writing them (about 20 MB)
     private static final int MAX_PENDING = 250_000;
 
-    private final Symmetry symmetry;
+    /**
+     * The player's answer to going beyond their range.
+     */
+    private enum Answer {
+        NOT_ASKED, CONFIRMED, REFUSED
+    }
+
+    private Symmetry symmetry;
     private final int maxRange;
+    private final int confirmSeconds;
+    private Answer answer = Answer.NOT_ASKED;
     private final int minY;
     private final int maxY;
     // Copies by chunk, then by position: the last block set at a position wins
@@ -55,11 +77,12 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     private int outOfRange;
     private final Actor actor;
 
-    SymmetryExtent(Extent extent, Symmetry symmetry, int maxRange, Actor actor) {
+    SymmetryExtent(Extent extent, Symmetry symmetry, int maxRange, int confirmSeconds, Actor actor) {
         super(extent);
         this.actor = actor;
         this.symmetry = symmetry;
         this.maxRange = maxRange;
+        this.confirmSeconds = confirmSeconds;
         this.minY = extent.getMinY();
         this.maxY = extent.getMaxY();
     }
@@ -74,8 +97,13 @@ final class SymmetryExtent extends AbstractDelegateExtent {
             throws WorldEditException {
         boolean changed = getExtent().setBlock(x, y, z, block);
         if (!symmetry.inRange(x, y, z, maxRange)) {
-            outOfRange++;
-            return changed;
+            if (canExtend() && symmetry.withRange(0).inRange(x, y, z, maxRange)) {
+                ask();
+            }
+            if (!symmetry.inRange(x, y, z, maxRange)) {
+                outOfRange++;
+                return changed;
+            }
         }
         for (Symmetry.Copy copy : symmetry.copies(x, y, z, maxRange)) {
             BlockVector3 target = copy.position();
@@ -131,6 +159,72 @@ final class SymmetryExtent extends AbstractDelegateExtent {
         return null;
     }
 
+    /**
+     * @return true if the player was not asked yet and their range is under the configured maximum
+     */
+    private boolean canExtend() {
+        return answer == Answer.NOT_ASKED && symmetry.range(maxRange) < maxRange;
+    }
+
+    /**
+     * Asks before an edit on a region that goes beyond the player's range.
+     */
+    private synchronized void checkRegion(Region region) {
+        BlockVector3 min = region.getMinimumPoint();
+        BlockVector3 max = region.getMaximumPoint();
+        if (canExtend() && (!symmetry.inRange(min.x(), min.y(), min.z(), maxRange)
+                || !symmetry.inRange(max.x(), max.y(), max.z(), maxRange))) {
+            ask();
+        }
+    }
+
+    /**
+     * Waits for FAWE's //confirm (or //cancel) like FAWE's own confirmations. The server thread cannot wait:
+     * there the copies stay within the range.
+     */
+    private void ask() {
+        answer = Answer.REFUSED;
+        int range = symmetry.range(maxRange);
+        Player player = actor.isPlayer() ? Bukkit.getPlayer(actor.getUniqueId()) : null;
+        if (player == null || Fawe.isMainThread()) {
+            return;
+        }
+        ReentrantLock lock = new ReentrantLock();
+        Condition condition = lock.newCondition();
+        InterruptableCondition wait = new InterruptableCondition(lock, condition, Thread.currentThread());
+        lock.lock();
+        try {
+            actor.setMeta("cmdConfirm", wait);
+            Component question = Messages.get("symmetry.confirm", "range", range, "max", maxRange,
+                    "seconds", confirmSeconds);
+            player.sendMessage((question == null ? Component.empty() : question.append(Component.space()))
+                    .append(button("symmetry.confirm-button", "//confirm"))
+                    .append(Component.space())
+                    .append(button("symmetry.cancel-button", "//cancel")));
+            if (condition.await(confirmSeconds, TimeUnit.SECONDS)) {
+                answer = Answer.CONFIRMED;
+                symmetry = symmetry.withRange(0);
+                Messages.send(actor, "symmetry.confirmed", "max", maxRange);
+            } else {
+                Messages.send(actor, "symmetry.not-confirmed", "range", range);
+            }
+        } catch (InterruptedException e) {
+            // //cancel (which also stops the edit) or another command
+            Messages.send(actor, "symmetry.not-confirmed", "range", range);
+        } finally {
+            if (actor.getMeta("cmdConfirm") == wait) {
+                actor.deleteMeta("cmdConfirm");
+            }
+            lock.unlock();
+        }
+    }
+
+    private static Component button(String key, String command) {
+        return Messages.plain(key)
+                .clickEvent(ClickEvent.runCommand(command))
+                .hoverEvent(HoverEvent.showText(Component.text(command)));
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void place(Extent extent, BlockVector3 target, BlockStateHolder block) throws WorldEditException {
         extent.setBlock(target.x(), target.y(), target.z(), block);
@@ -138,6 +232,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public <B extends BlockStateHolder<B>> int setBlocks(Region region, B block) throws MaxChangedBlocksException {
+        checkRegion(region);
         int count = 0;
         for (BlockVector3 position : region) {
             if (setBlock(position, block)) {
@@ -149,11 +244,15 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public int setBlocks(Region region, Pattern pattern) throws MaxChangedBlocksException {
+        checkRegion(region);
         return applyPattern(region, pattern);
     }
 
     @Override
     public int setBlocks(Set<BlockVector3> positions, Pattern pattern) {
+        if (positions instanceof Region region) {
+            checkRegion(region);
+        }
         return applyPattern(positions, pattern);
     }
 
@@ -181,6 +280,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public int replaceBlocks(Region region, Mask mask, Pattern pattern) throws MaxChangedBlocksException {
+        checkRegion(region);
         RegionVisitor visitor = new RegionVisitor(region, new RegionMaskingFilter(mask, new BlockReplace(this, pattern)), this);
         Operations.completeLegacy(visitor);
         return visitor.getAffected();
@@ -188,6 +288,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public <T extends Filter> T apply(Region region, T filter, boolean full) {
+        checkRegion(region);
         ExtentFilterBlock block = new ExtentFilterBlock(this);
         for (BlockVector3 position : region) {
             filter.applyBlock(block.init(position));

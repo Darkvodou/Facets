@@ -54,6 +54,9 @@ symmetry:
   max-range: 128
   # Type used by //sym set when none is given: simple2d, planx, plany, planz, cross2d, cross3d, star2d, star3d, megastar
   default-type: cross2d
+  # Time to //confirm a FAWE edit going beyond the player's own range (//sym range), in seconds.
+  # Confirmed, it is copied up to max-range; else only within the player's range.
+  confirm-seconds: 20
   # Copies the edits of FAWE (commands, brushes, pastes...). They are undone with //undo.
   worldedit: true
   # Copies the blocks placed and broken by hand, and the text written on signs
