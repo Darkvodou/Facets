@@ -7,11 +7,14 @@ import fr.darkvodou.moretools.loft.LoftConfig;
 import fr.darkvodou.moretools.loft.LoftVisualizer;
 import fr.darkvodou.moretools.loft.RemovePositionCommand;
 import fr.darkvodou.moretools.mask.PanesMaskParser;
+import fr.darkvodou.moretools.menu.MaskFavorites;
+import fr.darkvodou.moretools.menu.MenuListener;
 import fr.darkvodou.moretools.symmetry.SymmetryCommand;
 import fr.darkvodou.moretools.symmetry.SymmetryConfig;
 import fr.darkvodou.moretools.symmetry.SymmetryListener;
 import fr.darkvodou.moretools.symmetry.SymmetryMarker;
 import fr.darkvodou.moretools.symmetry.SymmetrySessions;
+import org.bukkit.Material;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -33,6 +36,7 @@ public final class MoreTools extends JavaPlugin {
     private SymmetrySessions symmetries;
     private SymmetryListener symmetryListener;
     private BukkitTask markerTask;
+    private MenuListener menu;
 
     @Override
     public void onEnable() {
@@ -68,8 +72,10 @@ public final class MoreTools extends JavaPlugin {
         getServer().getPluginManager().registerEvents(symmetryListener, this);
         register("/sym", new SymmetryCommand(symmetries));
         scheduleMarker(symmetries.config());
+        menu = new MenuListener(this, symmetries, new MaskFavorites(this), loadMenuItem(new ArrayList<>()));
+        getServer().getPluginManager().registerEvents(menu, this);
         register("moretools", new MoreToolsCommand(this));
-        getLogger().info("Registered loft selection, //fuzzyfill and //sym.");
+        getLogger().info("Registered loft selection, //fuzzyfill, //sym and the menu.");
     }
 
     @Override
@@ -96,6 +102,7 @@ public final class MoreTools extends JavaPlugin {
         SymmetryConfig symmetryConfig = loadSymmetryConfig(warnings);
         symmetries.setConfig(symmetryConfig);
         scheduleMarker(symmetryConfig);
+        menu.setItem(loadMenuItem(warnings));
         return warnings;
     }
 
@@ -121,6 +128,18 @@ public final class MoreTools extends JavaPlugin {
             warnings.add(warning);
             getLogger().warning("config.yml: " + warning);
         });
+    }
+
+    private Material loadMenuItem(List<String> warnings) {
+        String name = getConfig().getString("menu.item", "nether_star");
+        Material material = Material.matchMaterial(name);
+        if (material == null || !material.isItem() || material.isAir()) {
+            String warning = "menu.item: unknown item '" + name + "', using nether_star";
+            warnings.add(warning);
+            getLogger().warning("config.yml: " + warning);
+            return Material.NETHER_STAR;
+        }
+        return material;
     }
 
     private void scheduleMarker(SymmetryConfig config) {

@@ -2,6 +2,7 @@ package fr.darkvodou.moretools;
 
 import com.sk89q.worldedit.extension.platform.Actor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -9,6 +10,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Player messages from messages.yml, written like FAWE's: legacy &amp; color codes and {name} placeholders.
@@ -43,12 +46,43 @@ public final class Messages {
         return render(key, true, placeholders);
     }
 
+    /**
+     * The message without prefix and without italics, for item names and lore.
+     */
+    public static Component plain(String key, Object... placeholders) {
+        Component message = render(key, false, placeholders);
+        return message == null ? Component.empty() : noItalic(message);
+    }
+
+    /**
+     * The lines of a message (separated by \n), without prefix and without italics, for item lore.
+     */
+    public static List<Component> lines(String key, Object... placeholders) {
+        String template = messages.getString(key, key);
+        if (template.isEmpty()) {
+            return List.of();
+        }
+        List<Component> lines = new ArrayList<>();
+        for (String line : template.split("\n", -1)) {
+            lines.add(noItalic(fill(line, false, placeholders)));
+        }
+        return lines;
+    }
+
+    private static Component noItalic(Component component) {
+        return component.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+    }
+
     @Nullable
     private static Component render(String key, boolean prefixed, Object... placeholders) {
         String template = messages.getString(key, key);
         if (template.isEmpty()) {
             return null;
         }
+        return fill(template, prefixed, placeholders);
+    }
+
+    private static Component fill(String template, boolean prefixed, Object... placeholders) {
         // Colors first, so that values (an error text...) are never taken for a color
         String text = colors((prefixed ? messages.getString("prefix", "") : "") + template);
         for (int i = 0; i + 1 < placeholders.length; i += 2) {

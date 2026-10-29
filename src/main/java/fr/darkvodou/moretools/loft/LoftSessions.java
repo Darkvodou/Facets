@@ -13,7 +13,7 @@ import java.lang.invoke.MethodHandles;
 /**
  * Access to the WorldEdit session and loft selection of a Bukkit player.
  */
-final class LoftSessions {
+public final class LoftSessions {
 
     // LocalSession.getRegionSelector(World) clears the selection when the world differs:
     // a passive read (particles) must not do that, so the field is read directly.
@@ -40,21 +40,28 @@ final class LoftSessions {
      */
     @Nullable
     static LoftRegionSelector peekSelector(Player player) {
-        LocalSession session = WorldEdit.getInstance().getSessionManager().getIfPresent(BukkitAdapter.adapt(player));
-        if (session == null) {
-            return null;
-        }
-        RegionSelector selector;
-        try {
-            selector = (RegionSelector) SELECTOR_GETTER.invoke(session);
-        } catch (Throwable e) {
-            return null;
-        }
+        RegionSelector selector = peekAnySelector(player);
         if (!(selector instanceof LoftRegionSelector loft) || loft.getWorld() == null
                 || !loft.getWorld().getName().equals(player.getWorld().getName())) {
             return null;
         }
         return loft;
+    }
+
+    /**
+     * Selection mode of the player (any kind), without creating or changing anything.
+     */
+    @Nullable
+    public static RegionSelector peekAnySelector(Player player) {
+        LocalSession session = WorldEdit.getInstance().getSessionManager().getIfPresent(BukkitAdapter.adapt(player));
+        if (session == null) {
+            return null;
+        }
+        try {
+            return (RegionSelector) SELECTOR_GETTER.invoke(session);
+        } catch (Throwable e) {
+            return null;
+        }
     }
 
     /**

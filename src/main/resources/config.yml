@@ -63,3 +63,7 @@ symmetry:
     enabled: true
     # Ticks between two refreshes (20 ticks = 1 second)
     refresh-ticks: 10
+
+menu:
+  # Item opening the MoreTools menu with a right click (moretools.menu permission)
+  item: nether_star

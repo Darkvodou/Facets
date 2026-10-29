@@ -52,6 +52,9 @@ permissions:
   moretools.symmetry:
     description: Use //sym and its symmetry.
     default: op
+  moretools.menu:
+    description: Open the MoreTools menu with the menu item (a nether star by default).
+    default: op
   moretools.reload:
     description: Reload the MoreTools configuration.
     default: op
