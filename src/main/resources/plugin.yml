@@ -1,6 +1,6 @@
-name: MoreTools
+name: Facets
 version: '${version}'
-main: fr.darkvodou.moretools.MoreTools
+main: fr.darkvodou.facets.Facets
 api-version: '1.21'
 description: Adds extra masks, a loft selection, a fuzzy fill and a symmetry tool to FastAsyncWorldEdit.
 author: darkvodou
@@ -10,51 +10,51 @@ commands:
   /loft:
     description: Loft selection (curved surface through splines).
     usage: "//loft [smooth | poly | facet | set <pattern> [count] [-o -c -d -h -n -u] | viz]"
-    permission: moretools.loft
+    permission: facets.loft
   /rpos1:
     description: Removes the last loft frame (pos1), or the closest one with -r / -c.
     usage: "//rpos1 [amount] [-r | -c]"
-    permission: moretools.loft
+    permission: facets.loft
   /rpos2:
     description: Removes the last loft point (pos2), or the closest one with -r / -c.
     usage: "//rpos2 [amount] [-r | -c]"
-    permission: moretools.loft
+    permission: facets.loft
   /fuzzyfill:
     description: Fills the air around you without going through the holes up to the tolerance.
     usage: "//fuzzyfill <pattern> <radius> [tolerance]"
-    permission: moretools.fuzzyfill
+    permission: facets.fuzzyfill
   /fuzzyfillh:
     description: Like //fuzzyfill, only in the layer of your feet.
     usage: "//fuzzyfillh <pattern> <radius> [tolerance]"
-    permission: moretools.fuzzyfill
+    permission: facets.fuzzyfill
   /fuzzyfillr:
     description: Like //fuzzyfill, only at the level of your feet and below.
     usage: "//fuzzyfillr <pattern> <radius> [tolerance]"
-    permission: moretools.fuzzyfill
+    permission: facets.fuzzyfill
   /sym:
     description: Copies the blocks placed by hand or with FAWE around a symmetry point.
     usage: "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]"
     aliases: [/symmetry]
-    permission: moretools.symmetry
-  moretools:
-    description: Reloads the MoreTools configuration.
-    usage: "/moretools reload"
+    permission: facets.symmetry
+  facets:
+    description: Reloads the Facets configuration.
+    usage: "/facets reload"
     aliases: [mtools]
-    permission: moretools.reload
+    permission: facets.reload
 
 permissions:
-  moretools.loft:
+  facets.loft:
     description: Use the loft selection and its commands.
     default: op
-  moretools.fuzzyfill:
+  facets.fuzzyfill:
     description: Use //fuzzyfill, //fuzzyfillh and //fuzzyfillr.
     default: op
-  moretools.symmetry:
+  facets.symmetry:
     description: Use //sym and its symmetry.
     default: op
-  moretools.menu:
-    description: Open the MoreTools menu with the menu item (a nether star by default).
+  facets.menu:
+    description: Open the Facets menu with the menu item (a nether star by default).
     default: op
-  moretools.reload:
-    description: Reload the MoreTools configuration.
+  facets.reload:
+    description: Reload the Facets configuration.
     default: op

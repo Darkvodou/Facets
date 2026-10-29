@@ -1,4 +1,4 @@
-# MoreTools
+# Facets
 
 A growing toolbox for builders using [FastAsyncWorldEdit](https://github.com/IntellectualSites/FastAsyncWorldEdit) on Paper.
 
@@ -38,7 +38,7 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 | `megastar` | `star3d` around all three axes | 48 |
 
 ### Menu
-Right click with a nether star to open the MoreTools menu: symmetry, selections and global masks (with favorites) in a few clicks.
+Right click with a nether star to open the Facets menu: symmetry, selections and global masks (with favorites) in a few clicks.
 
 ### `#panes` mask
 Every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
@@ -47,17 +47,17 @@ Every glass pane (`glass_pane` and all stained glass panes), for example `//repl
 
 | Permission | Access |
 |---|---|
-| `moretools.loft` | Loft selection, `//loft`, `//rpos1`, `//rpos2` |
-| `moretools.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillh`, `//fuzzyfillr` |
-| `moretools.symmetry` | `//sym` |
-| `moretools.menu` | The menu (right click with a nether star) |
-| `moretools.reload` | `/moretools reload` |
+| `facets.loft` | Loft selection, `//loft`, `//rpos1`, `//rpos2` |
+| `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillh`, `//fuzzyfillr` |
+| `facets.symmetry` | `//sym` |
+| `facets.menu` | The menu (right click with a nether star) |
+| `facets.reload` | `/facets reload` |
 
 All of them default to operators.
 
 ## Configuration
 `config.yml` and `messages.yml` are created on first launch, and new options are added to them on each update.
-`/moretools reload` reloads both files.
+`/facets reload` reloads both files.
 
 ## Requirements
 - Paper 1.21+

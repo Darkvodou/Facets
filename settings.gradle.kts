@@ -1,1 +1,1 @@
-rootProject.name = "MoreTools"
+rootProject.name = "Facets"

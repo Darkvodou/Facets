@@ -1,4 +1,4 @@
-# MoreTools configuration. Reload with /moretools reload.
+# Facets configuration. Reload with /facets reload.
 
 loft:
   # Particles showing loft selections
@@ -68,5 +68,5 @@ symmetry:
     refresh-ticks: 10
 
 menu:
-  # Item opening the MoreTools menu with a right click (moretools.menu permission)
+  # Item opening the Facets menu with a right click (facets.menu permission)
   item: nether_star

@@ -74,14 +74,14 @@ tasks.runServer {
     jvmArgs("-Xms2G", "-Xmx2G")
 }
 
-// "MoreTools" group: common tasks gathered in the IDE's Gradle panel
-val moreToolsGroup = "MoreTools"
+// "Facets" group: common tasks gathered in the IDE's Gradle panel
+val facetsGroup = "Facets"
 
 listOf("clean", "build", "jar", "assemble", "compileJava", "processResources", "check", "test", "runServer")
-    .forEach { name -> tasks.named(name) { group = moreToolsGroup } }
+    .forEach { name -> tasks.named(name) { group = facetsGroup } }
 
 tasks.register("rebuild") {
-    group = moreToolsGroup
+    group = facetsGroup
     description = "Cleans then rebuilds the plugin."
     dependsOn(tasks.clean, tasks.build)
 }

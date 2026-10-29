@@ -1,4 +1,4 @@
-# MoreTools messages. Reload with /moretools reload.
+# Facets messages. Reload with /facets reload.
 # Colors use FAWE's legacy codes (&7 gray, &c red...), and &#rrggbb for hex colors.
 # Placeholders are written {name}. An empty message is not sent.
 # If you edited an older messages.yml, delete it so it is created again with the {info} / {error} colors.
@@ -88,9 +88,9 @@ symmetry:
   info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
   info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
 
-# The MoreTools menu. Lore lines are separated by \n
+# The Facets menu. Lore lines are separated by \n
 menu:
-  title: "MoreTools"
+  title: "Facets"
   tab:
     selections: "&6Selections"
     masks: "&6Masks"
