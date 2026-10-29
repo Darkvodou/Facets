@@ -1,0 +1,65 @@
+# MoreTools configuration. Reload with /moretools reload.
+
+loft:
+  # Particles showing loft selections
+  particles:
+    # Shown when a player has a loft selection (each player can toggle it with //loft viz)
+    shown-by-default: true
+    # Ticks between two refreshes (20 ticks = 1 second)
+    refresh-ticks: 10
+    # Particles further than this from the player are not sent (blocks)
+    view-distance: 128
+    # Forces the client to show particles far away: without it, particles over 32 blocks away are hidden
+    force: true
+    # Also shows a player's selection to the other players around (within view-distance of them)
+    show-to-others: false
+    # Above this, the particles of the lines are thinned out (per player and per refresh)
+    max-particles: 4000
+
+    # Particle styles. "particle" is a Minecraft particle name (flame, soul_fire_flame, end_rod, dust...).
+    # Dust particles also take "color" (#rrggbb) and "size".
+    # Outline and frames
+    outline:
+      particle: flame
+      # Distance between two particles (blocks)
+      step: 0.5
+    # Net drawn inside the surface
+    net:
+      particle: flame
+      step: 1.0
+      # Distance between two lines of the net (blocks)
+      spacing: 10.0
+    # Frame starts (//pos1)
+    frame-start:
+      particle: soul_fire_flame
+      count: 6
+      spread: 0.2
+    # Frame points (//pos2)
+    point:
+      particle: soul_fire_flame
+      count: 2
+      spread: 0.08
+
+  set:
+    # Lines in each direction of a net (//loft set -n) when no count is given
+    default-net-count: 5
+
+fuzzyfill:
+  # Largest radius accepted by //fuzzyfill (blocks). Memory grows with the cube of the radius.
+  max-radius: 64
+
+symmetry:
+  # Largest distance from the symmetry point (blocks, along each axis) at which blocks are copied.
+  # Players can lower it for themselves with //sym range.
+  max-range: 128
+  # Type used by //sym set when none is given: simple2d, planx, plany, planz, cross2d, cross3d, star2d, star3d, megastar
+  default-type: cross2d
+  # Copies the edits of FAWE (commands, brushes, pastes...). They are undone with //undo.
+  worldedit: true
+  # Copies the blocks placed and broken by hand, and the text written on signs
+  vanilla: true
+  # Particles showing each player their symmetry point
+  marker:
+    enabled: true
+    # Ticks between two refreshes (20 ticks = 1 second)
+    refresh-ticks: 10

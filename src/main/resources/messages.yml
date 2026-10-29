@@ -1,0 +1,83 @@
+# MoreTools messages. Reload with /moretools reload.
+# Colors use FAWE's legacy codes (&7 gray, &c red...), and &#rrggbb for hex colors.
+# Placeholders are written {name}. An empty message is not sent.
+# If you edited an older messages.yml, delete it so it is created again with the {info} / {error} colors.
+
+# Added before every message. FAWE's own prefix is "&8(&4&lFAWE&8)&7 "
+prefix: "&8(&4&lMORE&8)&7 "
+
+# Colors used by the messages below through {info}, {error} and {warning}.
+# Info is gray like FAWE's messages. An empty color keeps the last color of the prefix.
+colors:
+  info: "&7"
+  error: ""
+  warning: ""
+
+no-permission: "{error}You are lacking the permission node: {permission}"
+player-only: "{error}This command can only be used by a player."
+usage: "{error}Usage: {usage}"
+
+reload:
+  done: "{info}Configuration reloaded!"
+  warning: "{warning}{message}"
+
+loft:
+  # Description of the loft selection in //sel list (no prefix, like the other lines)
+  description: "Select a lofted surface through splines"
+  description-poly: "Select a low poly lofted surface (straight segments)"
+  description-facet: "Select a lofted surface made of flat triangles"
+  selected: "{info}Loft selector: left click=new frame, right click=add a point to the frame."
+  selected-poly: "{info}Loft poly selector: left click=new frame, right click=add a point to the frame."
+  selected-facet: "{info}Loft facet selector: left click=new frame, right click=add a point to the frame."
+  already-selected: "{error}You are already using the loft selection."
+  already-selected-poly: "{error}You are already using the loft poly selection."
+  already-selected-facet: "{error}You are already using the loft facet selection."
+  primary: "{info}Started loft frame #{frame} at {position} ({volume})."
+  secondary: "{info}Added point #{point} to loft frame #{frame} at {position} ({volume})."
+  # Lines shown by //size
+  info-frames: "{info}{frames}"
+  info-points: "{info}{points}"
+  cannot-expand: "{error}A loft selection cannot be expanded."
+  cannot-contract: "{error}A loft selection cannot be contracted."
+
+  no-selection: "{error}Make a loft selection first (//sel loft)."
+  incomplete: "{error}The loft needs at least two points."
+  invalid-count: "{error}Invalid count: {count}"
+  count-too-low: "{error}The count must be at least 1."
+  invalid-flag: "{error}The flag {flag} is not applicable here"
+  invalid-pattern: "{error}{message}"
+  done: "{info}Operation completed ({count})."
+  failed: "{error}An error occurred: {message}"
+  particles-on: "{info}Loft particles enabled."
+  particles-off: "{info}Loft particles disabled."
+
+  removed-frame: "{info}Removed loft frame at {position} ({frames} frames, {points} points left)."
+  removed-point: "{info}Removed loft point at {position} ({frames} frames, {points} points left)."
+  removed-frames: "{info}Removed {count} loft frames ({frames} frames, {points} points left)."
+  removed-points: "{info}Removed {count} loft points ({frames} frames, {points} points left)."
+  no-frame: "{error}No loft frame to remove."
+  no-point: "{error}No loft point to remove."
+
+fuzzyfill:
+  invalid-number: "{error}Invalid number: {value}"
+  radius-range: "{error}The radius must be between 1 and {max}."
+  tolerance-range: "{error}The tolerance must be between 0 and the radius ({max})."
+  invalid-pattern: "{error}{message}"
+  not-air: "{error}Stand in the air you want to fill."
+  no-room: "{error}No space around you is wider than the tolerance ({tolerance})."
+  done: "{info}Operation completed ({count})."
+  failed: "{error}An error occurred: {message}"
+
+symmetry:
+  set: "{info}Symmetry {type} set at {position} ({copies} blocks per block, range {range})."
+  type: "{info}Symmetry type set to {type} ({copies} blocks per block)."
+  range: "{info}Symmetry range set to {range} blocks."
+  range-limit: "{error}The range must be between 1 and {max}."
+  invalid-number: "{error}Invalid number: {value}"
+  unknown-type: "{error}Unknown symmetry type: {type}. Types: {types}"
+  paused: "{info}Symmetry paused (//sym toggle to resume)."
+  resumed: "{info}Symmetry resumed."
+  removed: "{info}Symmetry removed."
+  none: "{error}You have no symmetry (//sym set [type])."
+  info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
+  info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
