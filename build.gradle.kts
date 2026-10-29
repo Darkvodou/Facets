@@ -1,5 +1,7 @@
 plugins {
     java
+    // Test server: gradlew runServer
+    id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 group = "fr.darkvodou"
@@ -61,10 +63,21 @@ tasks.processResources {
     }
 }
 
+// Test server in run/ (not in git), with the plugin just built
+tasks.runServer {
+    minecraftVersion("26.3")
+    // Paper 26.x needs Java 25; the plugin itself stays compiled for Java 21
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(25)) })
+    downloadPlugins {
+        github("IntellectualSites", "FastAsyncWorldEdit", "2.16.1", "FastAsyncWorldEdit-Paper-2.16.1.jar")
+    }
+    jvmArgs("-Xms2G", "-Xmx2G")
+}
+
 // "MoreTools" group: common tasks gathered in the IDE's Gradle panel
 val moreToolsGroup = "MoreTools"
 
-listOf("clean", "build", "jar", "assemble", "compileJava", "processResources", "check", "test")
+listOf("clean", "build", "jar", "assemble", "compileJava", "processResources", "check", "test", "runServer")
     .forEach { name -> tasks.named(name) { group = moreToolsGroup } }
 
 tasks.register("rebuild") {
