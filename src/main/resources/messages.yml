@@ -78,6 +78,7 @@ symmetry:
   paused: "{info}Symmetry paused (//sym toggle to resume)."
   resumed: "{info}Symmetry resumed."
   removed: "{info}Symmetry removed."
+  out-of-range: "{warning}{count} blocks were more than {range} blocks from the symmetry point and were not copied (//sym range)."
   none: "{error}You have no symmetry (//sym set [type])."
   info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
   info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
