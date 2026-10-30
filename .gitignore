@@ -4,3 +4,5 @@ build/
 *.iml
 wiki/
 run/
+run-1.21.11/
+/notes.md

@@ -74,10 +74,23 @@ tasks.runServer {
     jvmArgs("-Xms2G", "-Xmx2G")
 }
 
+// Second test server on 1.21.11 (the Paper API the plugin is compiled against), in run-1.21.11/: gradlew runServer1_21_11
+tasks.register<xyz.jpenilla.runpaper.task.RunServer>("runServer1_21_11") {
+    description = "Runs a Paper 1.21.11 test server with the plugin."
+    minecraftVersion("1.21.11")
+    runDirectory.set(layout.projectDirectory.dir("run-1.21.11"))
+    pluginJars(tasks.jar.flatMap { it.archiveFile })
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
+    downloadPlugins {
+        github("IntellectualSites", "FastAsyncWorldEdit", "2.16.1", "FastAsyncWorldEdit-Paper-2.16.1.jar")
+    }
+    jvmArgs("-Xms2G", "-Xmx2G")
+}
+
 // "Facets" group: common tasks gathered in the IDE's Gradle panel
 val facetsGroup = "Facets"
 
-listOf("clean", "build", "jar", "assemble", "compileJava", "processResources", "check", "test", "runServer")
+listOf("clean", "build", "jar", "assemble", "compileJava", "processResources", "check", "test", "runServer", "runServer1_21_11")
     .forEach { name -> tasks.named(name) { group = facetsGroup } }
 
 tasks.register("rebuild") {
