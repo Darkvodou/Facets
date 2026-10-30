@@ -77,4 +77,13 @@ All of them default to operators.
 ```
 The plugin jar is written to `build/libs/`.
 
+## Versions
+Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
+- **Major**: something you have to change on your side, like a command or permission renamed or removed, a new config format, or a higher minimum Paper, FAWE or Java version.
+- **Minor**: new features that break nothing.
+- **Patch**: fixes and other changes that add no feature, like messages, dependency updates or a rebuild for a new Paper version.
+- **Test builds** come before their version: `0.4.0-alpha.1`, `0.4.0-beta.1`, `0.4.0-rc.1`, then `0.4.0`.
+
+The highest change of a release wins, and resets the numbers on its right. The plugin stays in `0.x` while it is a pre-release; `1.0.0` will be the first stable version.
+
 > More tools are on the way!
