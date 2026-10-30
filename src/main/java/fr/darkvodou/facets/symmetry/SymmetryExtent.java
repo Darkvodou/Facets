@@ -2,6 +2,7 @@ package fr.darkvodou.facets.symmetry;
 
 import com.fastasyncworldedit.core.Fawe;
 import com.fastasyncworldedit.core.extent.filter.block.ExtentFilterBlock;
+import com.fastasyncworldedit.core.math.BlockVectorSet;
 import com.fastasyncworldedit.core.queue.Filter;
 import com.fastasyncworldedit.core.queue.IQueueExtent;
 import com.fastasyncworldedit.core.util.ExtentTraverser;
@@ -31,8 +32,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -49,13 +49,22 @@ import java.util.concurrent.locks.ReentrantLock;
  * and two versions of the same chunk applied at once lose blocks. So the copies are kept by chunk, and written
  * chunk after chunk once the queue has placed the blocks of the edit.
  * <p>
+ * A position is written only once per edit: FAWE's history keeps each write, and the undo of a position written
+ * twice can leave its first block (a selection across the symmetry). The blocks of the edit win over the copies
+ * landing on them, and a copy written is not written over.
+ * <p>
+ * When too many copies are kept, some are written before the end of the edit. During a region operation (//set,
+ * //replace...), only the copies outside the region are: no block of the edit lands on them. The copies inside it
+ * are dropped when every block of the region is set, kept until the end otherwise. Other edits (brushes, pastes)
+ * know no region: only there, past the limit, can a block of the edit still land on a copy written before it.
+ * <p>
  * When the edit goes beyond the player's range (but not the configured maximum), it waits for FAWE's //confirm
  * to copy up to the maximum: before placing anything for a region, at the first block too far otherwise.
  */
 final class SymmetryExtent extends AbstractDelegateExtent {
 
-    // Copies kept before writing them (about 20 MB)
-    private static final int MAX_PENDING = 250_000;
+    // Memory of the copies kept before writing them (16 million copies when they are close together)
+    private static final long MAX_PENDING_BYTES = 32L << 20;
 
     /**
      * The player's answer to going beyond their range.
@@ -71,9 +80,14 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     private Answer answer = Answer.NOT_ASKED;
     private final int minY;
     private final int maxY;
-    // Copies by chunk, then by position: the last block set at a position wins
-    private final Map<Long, Map<BlockVector3, BlockStateHolder<?>>> pending = new HashMap<>();
-    private int pendingCount;
+    // The last copy set at a position wins
+    private final PendingCopies pending;
+    // Positions already sent to the queue: the blocks of the edit and the copies written
+    private final BlockVectorSet written = new BlockVectorSet();
+    // The region operation running, and whether it sets every block of its region
+    @Nullable
+    private Region region;
+    private boolean fills;
     // Blocks set too far from the point to be copied
     private int outOfRange;
     private final Actor actor;
@@ -88,6 +102,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
         this.confirmSeconds = confirmSeconds;
         this.minY = extent.getMinY();
         this.maxY = extent.getMaxY();
+        this.pending = new PendingCopies(minY, maxY);
     }
 
     @Override
@@ -99,6 +114,8 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     public synchronized <T extends BlockStateHolder<T>> boolean setBlock(int x, int y, int z, T block)
             throws WorldEditException {
         boolean changed = getExtent().setBlock(x, y, z, block);
+        written.add(x, y, z);
+        pending.remove(x, y, z);
         if (!symmetry.inRange(x, y, z, maxRange)) {
             if (canExtend() && symmetry.withRange(0).inRange(x, y, z, maxRange)) {
                 ask();
@@ -110,24 +127,30 @@ final class SymmetryExtent extends AbstractDelegateExtent {
         }
         for (Symmetry.Copy copy : symmetry.copies(x, y, z, maxRange)) {
             BlockVector3 target = copy.position();
-            if (target.y() >= minY && target.y() <= maxY) {
-                long chunk = ((long) (target.x() >> 4) << 32) | ((target.z() >> 4) & 0xffffffffL);
-                if (pending.computeIfAbsent(chunk, k -> new HashMap<>())
-                        .put(target, WorldEditMirror.transform(block, copy.transform())) == null) {
-                    pendingCount++;
-                }
+            if (target.y() < minY || target.y() > maxY || written.contains(target.x(), target.y(), target.z())
+                    // The region operation sets this block later
+                    || (fills && region.contains(target))) {
+                continue;
             }
+            pending.put(target.x(), target.y(), target.z(), WorldEditMirror.transform(block, copy.transform()));
         }
-        if (pendingCount >= MAX_PENDING) {
-            writeCopies();
+        if (pending.bytes() >= MAX_PENDING_BYTES) {
+            Region current = region;
+            writeCopies(current == null ? null : (cx, cy, cz) -> current.contains(cx, cy, cz));
+            if (pending.bytes() >= MAX_PENDING_BYTES / 2) {
+                // Too many copies inside the region: written anyway, rather than going through them at every block
+                writeCopies(null);
+            }
         }
         return changed;
     }
 
     /**
      * Writes the copies kept, between two flushes of the queue so that no chunk is in two versions at once.
+     *
+     * @param keep the positions to keep for later, or null to write every copy
      */
-    private void writeCopies() throws WorldEditException {
+    private void writeCopies(@Nullable PendingCopies.Position keep) throws WorldEditException {
         if (pending.isEmpty()) {
             return;
         }
@@ -135,23 +158,37 @@ final class SymmetryExtent extends AbstractDelegateExtent {
         if (queue != null) {
             queue.flush();
         }
-        for (Map<BlockVector3, BlockStateHolder<?>> chunk : pending.values()) {
-            for (Map.Entry<BlockVector3, BlockStateHolder<?>> copy : chunk.entrySet()) {
-                place(getExtent(), copy.getKey(), copy.getValue());
-            }
-        }
-        pending.clear();
-        pendingCount = 0;
+        Extent extent = getExtent();
+        pending.write((x, y, z, block) -> {
+            place(extent, x, y, z, block);
+            written.add(x, y, z);
+        }, keep);
         if (queue != null) {
             queue.flush();
         }
+    }
+
+    /**
+     * Starts a region operation, until {@link #end()}.
+     *
+     * @param fills whether it sets every block of the region
+     */
+    private synchronized void begin(Region region, boolean fills) {
+        checkRegion(region);
+        this.region = region;
+        this.fills = fills;
+    }
+
+    private synchronized void end() {
+        region = null;
+        fills = false;
     }
 
     // Called when the edit ends, before the queue below is flushed
     @Override
     protected synchronized Operation commitBefore() {
         try {
-            writeCopies();
+            writeCopies(null);
         } catch (WorldEditException e) {
             throw new IllegalStateException("Could not write the symmetric copies", e);
         }
@@ -231,34 +268,47 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void place(Extent extent, BlockVector3 target, BlockStateHolder block) throws WorldEditException {
-        extent.setBlock(target.x(), target.y(), target.z(), block);
+    private static void place(Extent extent, int x, int y, int z, BlockStateHolder block) throws WorldEditException {
+        extent.setBlock(x, y, z, block);
     }
 
     @Override
     public <B extends BlockStateHolder<B>> int setBlocks(Region region, B block) throws MaxChangedBlocksException {
-        checkRegion(region);
-        int count = 0;
-        for (BlockVector3 position : region) {
-            if (setBlock(position, block)) {
-                count++;
+        begin(region, true);
+        try {
+            int count = 0;
+            for (BlockVector3 position : region) {
+                if (setBlock(position, block)) {
+                    count++;
+                }
             }
+            return count;
+        } finally {
+            end();
         }
-        return count;
     }
 
     @Override
     public int setBlocks(Region region, Pattern pattern) throws MaxChangedBlocksException {
-        checkRegion(region);
-        return applyPattern(region, pattern);
+        begin(region, true);
+        try {
+            return applyPattern(region, pattern);
+        } finally {
+            end();
+        }
     }
 
     @Override
     public int setBlocks(Set<BlockVector3> positions, Pattern pattern) {
-        if (positions instanceof Region region) {
-            checkRegion(region);
+        if (!(positions instanceof Region region)) {
+            return applyPattern(positions, pattern);
         }
-        return applyPattern(positions, pattern);
+        begin(region, true);
+        try {
+            return applyPattern(positions, pattern);
+        } finally {
+            end();
+        }
     }
 
     private int applyPattern(Iterable<BlockVector3> positions, Pattern pattern) {
@@ -285,19 +335,27 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public int replaceBlocks(Region region, Mask mask, Pattern pattern) throws MaxChangedBlocksException {
-        checkRegion(region);
-        RegionVisitor visitor = new RegionVisitor(region, new RegionMaskingFilter(mask, new BlockReplace(this, pattern)), this);
-        Operations.completeLegacy(visitor);
-        return visitor.getAffected();
+        begin(region, false);
+        try {
+            RegionVisitor visitor = new RegionVisitor(region, new RegionMaskingFilter(mask, new BlockReplace(this, pattern)), this);
+            Operations.completeLegacy(visitor);
+            return visitor.getAffected();
+        } finally {
+            end();
+        }
     }
 
     @Override
     public <T extends Filter> T apply(Region region, T filter, boolean full) {
-        checkRegion(region);
-        ExtentFilterBlock block = new ExtentFilterBlock(this);
-        for (BlockVector3 position : region) {
-            filter.applyBlock(block.init(position));
+        begin(region, false);
+        try {
+            ExtentFilterBlock block = new ExtentFilterBlock(this);
+            for (BlockVector3 position : region) {
+                filter.applyBlock(block.init(position));
+            }
+            return filter;
+        } finally {
+            end();
         }
-        return filter;
     }
 }
