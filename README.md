@@ -40,6 +40,12 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 ### Menu
 Right click with a nether star to open the Facets menu: symmetry, selections and global masks (with favorites) in a few clicks.
 
+### Variants and families — `/variant`, `/family`
+With a block in hand, `/variant` shows its variants: with `oak_stairs`, every stairs.
+`/family` shows its family: with `oak_stairs`, every oak block (planks, slab, fence, door, logs...).
+The two buttons at the bottom of the menu switch between them.
+Left click puts the variant in hand, right click adds a stack of it to the inventory.
+
 ### `#panes` mask
 Every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
 
@@ -51,6 +57,7 @@ Every glass pane (`glass_pane` and all stained glass panes), for example `//repl
 | `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillh`, `//fuzzyfillr` |
 | `facets.symmetry` | `//sym` |
 | `facets.menu` | The menu (right click with a nether star) |
+| `facets.variants` | `/variant`, `/family` |
 | `facets.reload` | `/facets reload` |
 
 All of them default to operators.

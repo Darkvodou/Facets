@@ -36,6 +36,15 @@ commands:
     usage: "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]"
     aliases: [/symmetry]
     permission: facets.symmetry
+  variant:
+    description: Opens the variants of the block in hand (every stairs for oak_stairs).
+    usage: "/variant"
+    aliases: [variants]
+    permission: facets.variants
+  family:
+    description: Opens the family of the block in hand (every oak block for oak_stairs).
+    usage: "/family"
+    permission: facets.variants
   facets:
     description: Reloads the Facets configuration.
     usage: "/facets reload"
@@ -54,6 +63,9 @@ permissions:
     default: op
   facets.menu:
     description: Open the Facets menu with the menu item (a nether star by default).
+    default: op
+  facets.variants:
+    description: Use /variant and /family (gives the chosen blocks).
     default: op
   facets.reload:
     description: Reload the Facets configuration.

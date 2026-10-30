@@ -88,6 +88,21 @@ symmetry:
   info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
   info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
 
+variants:
+  not-a-block: "{error}Hold a block to see its variants."
+  no-variant: "{error}{block} has no variants (/family for the blocks of its family)."
+  no-family: "{error}{block} has no family (/variant for its variants)."
+  title: "Variants"
+  variant-lore: "&7Left click: put in hand
+&7Right click: add a stack to the inventory"
+  by-family: "&eFamily: {family}"
+  by-shape: "&eVariants: every {shape}"
+  view-shown: "&aShown &7({count} blocks)"
+  view-lore: "&7Click to show these {count} blocks"
+  view-empty: "&7Nothing else to show"
+  previous: "&ePrevious page &7({page}/{pages})"
+  next: "&eNext page &7({page}/{pages})"
+
 # The Facets menu. Lore lines are separated by \n
 menu:
   title: "Facets"

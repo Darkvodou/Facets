@@ -14,6 +14,7 @@ import fr.darkvodou.facets.symmetry.SymmetryConfig;
 import fr.darkvodou.facets.symmetry.SymmetryListener;
 import fr.darkvodou.facets.symmetry.SymmetryMarker;
 import fr.darkvodou.facets.symmetry.SymmetrySessions;
+import fr.darkvodou.facets.variants.VariantsMenu;
 import org.bukkit.Material;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
@@ -74,8 +75,12 @@ public final class Facets extends JavaPlugin {
         scheduleMarker(symmetries.config());
         menu = new MenuListener(this, symmetries, new MaskFavorites(this), loadMenuItem(new ArrayList<>()));
         getServer().getPluginManager().registerEvents(menu, this);
+        VariantsMenu variants = new VariantsMenu(getLogger());
+        getServer().getPluginManager().registerEvents(variants, this);
+        register("variant", variants);
+        register("family", variants);
         register("facets", new FacetsCommand(this));
-        getLogger().info("Registered loft selection, //fuzzyfill, //sym and the menu.");
+        getLogger().info("Registered loft selection, //fuzzyfill, //sym, /variant, /family and the menu.");
     }
 
     @Override
