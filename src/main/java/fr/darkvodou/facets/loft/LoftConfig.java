@@ -51,7 +51,7 @@ public record LoftConfig(
         return new LoftConfig(
                 particles.getBoolean("shown-by-default", true),
                 Math.max(1, particles.getInt("refresh-ticks", 10)),
-                Math.max(1, particles.getDouble("view-distance", 128)),
+                Math.max(1, particles.getDouble("view-distance", 256)),
                 particles.getBoolean("force", true),
                 particles.getBoolean("show-to-others", false),
                 Math.max(1, particles.getInt("max-particles", 4000)),

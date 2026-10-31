@@ -8,7 +8,7 @@ loft:
     # Ticks between two refreshes (20 ticks = 1 second)
     refresh-ticks: 10
     # Particles further than this from the player are not sent (blocks)
-    view-distance: 128
+    view-distance: 256
     # Forces the client to show particles far away: without it, particles over 32 blocks away are hidden
     force: true
     # Also shows a player's selection to the other players around (within view-distance of them)
