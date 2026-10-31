@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -100,5 +101,38 @@ class FuzzyFillTest {
     @Test
     void doesNothingInsideABlock() {
         assertEquals(List.of(), FuzzyFill.blocks(BlockVector3.at(0, 0, 0), 5, 1, null, position -> false));
+    }
+
+    @Test
+    void fillsLikeTheFillOverTheWholeBox() {
+        Random random = new Random(42);
+        BlockVector3[] flats = {null, BlockVector3.UNIT_Y, BlockVector3.UNIT_X, BlockVector3.UNIT_Z};
+        int filled = 0;
+        for (int run = 0; run < 120; run++) {
+            int radius = 3 + random.nextInt(18);
+            int tolerance = random.nextInt(Math.min(radius, 6) + 1);
+            BlockVector3 flat = flats[random.nextInt(flats.length)];
+            BlockVector3 start = BlockVector3.at(random.nextInt(100) - 50, random.nextInt(100) - 50, random.nextInt(100) - 50);
+            // Random rock, dense or not, with a small room at the start
+            double rock = random.nextDouble() * 0.4;
+            long seed = random.nextLong();
+            Predicate<BlockVector3> isAir = position -> {
+                if (flat != null && (position.subtract(start).dot(flat) != 0)) {
+                    return false;
+                }
+                if (position.distanceSq(start) <= 9) {
+                    return true;
+                }
+                long hash = (position.x() * 73856093L) ^ (position.y() * 19349663L) ^ (position.z() * 83492791L) ^ seed;
+                return new Random(hash).nextDouble() >= rock;
+            };
+            Set<BlockVector3> expected = new HashSet<>(DenseFuzzyFill.blocks(start, radius, tolerance, flat, isAir));
+            assertEquals(expected, new HashSet<>(FuzzyFill.blocks(start, radius, tolerance, flat, isAir)),
+                    "radius " + radius + ", tolerance " + tolerance + ", flat " + flat);
+            if (expected.size() > 20) {
+                filled++;
+            }
+        }
+        assertTrue(filled >= 60, filled + " runs filled more than 20 blocks");
     }
 }
