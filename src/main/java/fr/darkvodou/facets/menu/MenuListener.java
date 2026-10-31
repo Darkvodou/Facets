@@ -277,8 +277,8 @@ public final class MenuListener implements Listener {
 
         if (symmetry != null) {
             int range = symmetry.range(maxRange);
-            int[] steps = {-16, -1, 1, 16};
-            int[] slots = {38, 39, 41, 42};
+            int[] steps = {-50, -10, -1, 1, 10, 50};
+            int[] slots = {37, 38, 39, 41, 42, 43};
             for (int i = 0; i < steps.length; i++) {
                 int step = steps[i];
                 int target = Math.max(1, Math.min(maxRange, range + step));
@@ -287,8 +287,13 @@ public final class MenuListener implements Listener {
                         Messages.lines("menu.symmetry.range-step-lore", "range", target), false),
                         click -> player.chat("//sym range " + target));
             }
+            menu.set(36, item(Material.RED_CONCRETE, Messages.plain("menu.symmetry.range-min"),
+                    Messages.lines("menu.symmetry.range-step-lore", "range", 1), false), click -> player.chat("//sym range 1"));
             menu.set(40, item(Material.SPYGLASS, Messages.plain("menu.symmetry.range", "range", range),
-                    Messages.lines("menu.symmetry.range-lore", "max", maxRange), false), click -> player.chat("//sym range max"));
+                    Messages.lines("menu.symmetry.range-max-lore", "max", maxRange), false));
+            menu.set(44, item(Material.LIME_CONCRETE, Messages.plain("menu.symmetry.range-max"),
+                    Messages.lines("menu.symmetry.range-step-lore", "range", maxRange), false),
+                    click -> player.chat("//sym range max"));
         }
     }
 
