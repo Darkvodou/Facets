@@ -61,7 +61,7 @@ loft:
 fuzzyfill:
   invalid-number: "{error}Invalid number: {value}"
   radius-range: "{error}The radius must be between 1 and {max}."
-  tolerance-range: "{error}The tolerance must be between 0 and the radius ({max})."
+  tolerance-range: "{error}The tolerance must be between 0 and {max}."
   invalid-direction: "{error}Unknown direction: {value}"
   invalid-pattern: "{error}{message}"
   not-air: "{error}Stand in the air you want to fill."

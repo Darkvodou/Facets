@@ -47,6 +47,9 @@ loft:
 fuzzyfill:
   # Largest radius accepted by //fuzzyfill (blocks). Memory grows with the cube of the radius.
   max-radius: 64
+  # Largest tolerance accepted (blocks), never more than the radius. Past a few blocks, any space narrower than
+  # the tolerance + 1 counts as a hole and the fill gets hard to predict.
+  max-tolerance: 3
 
 symmetry:
   # Largest distance from the symmetry point (blocks, along each axis) at which blocks are copied.

@@ -110,8 +110,9 @@ public final class FuzzyFillCommand implements TabExecutor {
                 return true;
             }
         }
-        if (tolerance < 0 || tolerance > radius) {
-            Messages.send(player, "fuzzyfill.tolerance-range", "max", radius);
+        int maxTolerance = Math.min(radius, Math.max(0, plugin.getConfig().getInt("fuzzyfill.max-tolerance", 3)));
+        if (tolerance < 0 || tolerance > maxTolerance) {
+            Messages.send(player, "fuzzyfill.tolerance-range", "max", maxTolerance);
             return true;
         }
 
