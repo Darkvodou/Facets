@@ -2,6 +2,7 @@ package fr.darkvodou.facets.fill;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.UnknownDirectionException;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -21,35 +22,53 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 /**
- * //fuzzyfill &lt;pattern&gt; &lt;radius&gt; [tolerance]: fills the air around the player without going
- * through the holes up to the tolerance (in blocks), like a cave with a hole in its wall.
- * //fuzzyfillh only fills the layer of the player's feet, //fuzzyfillr that layer and what is below.
+ * Fills the air around the player without going through the holes up to the tolerance (in blocks), like a cave
+ * with a hole in its wall. Named after WorldEdit's fills:
+ * <ul>
+ *     <li>//fuzzyfill &lt;pattern&gt; &lt;radius&gt; [tolerance] [direction]: the layer of the player's feet, across
+ *     the direction (down by default)</li>
+ *     <li>//fuzzyfillr &lt;pattern&gt; &lt;radius&gt; [tolerance] [direction]: that layer and what is past it in the
+ *     direction</li>
+ *     <li>//fuzzyfills &lt;pattern&gt; &lt;radius&gt; [tolerance]: the whole sphere</li>
+ * </ul>
  */
 public final class FuzzyFillCommand implements TabExecutor {
 
     private static final int DEFAULT_TOLERANCE = 1;
+    private static final List<String> TOLERANCES = List.of("0", "1", "2", "3");
+    // The directions of WorldEdit's //fill
+    private static final List<String> DIRECTIONS = List.of("down", "up", "north", "south", "east", "west",
+            "me", "forward", "back", "left", "right");
 
     /**
-     * Which layers the fill may use, from the height of the player's feet.
+     * Which blocks the fill may use, from the player's feet and the direction.
      */
     private enum Mode {
-        ALL, LAYER, BELOW;
+        LAYER, RECURSIVE, SPHERE;
 
         static Mode of(Command command) {
             return switch (command.getName().toLowerCase(Locale.ROOT)) {
-                case "/fuzzyfillh" -> LAYER;
-                case "/fuzzyfillr" -> BELOW;
-                default -> ALL;
+                case "/fuzzyfill" -> LAYER;
+                case "/fuzzyfillr" -> RECURSIVE;
+                default -> SPHERE;
             };
         }
 
-        boolean allows(int y, int feet) {
+        boolean takesDirection() {
+            return this != SPHERE;
+        }
+
+        boolean allows(BlockVector3 position, BlockVector3 start, BlockVector3 direction) {
+            // How far the position is past the start in the direction
+            BlockVector3 offset = position.subtract(start);
+            int past = offset.x() * direction.x() + offset.y() * direction.y() + offset.z() * direction.z();
             return switch (this) {
-                case ALL -> true;
-                case LAYER -> y == feet;
-                case BELOW -> y <= feet;
+                case LAYER -> past == 0;
+                case RECURSIVE -> past >= 0;
+                case SPHERE -> true;
             };
         }
     }
@@ -66,8 +85,10 @@ public final class FuzzyFillCommand implements TabExecutor {
             Messages.send(sender, "player-only");
             return true;
         }
-        if (args.length < 2 || args.length > 3) {
-            Messages.send(player, "usage", "usage", "/" + label + " <pattern> <radius> [tolerance]");
+        Mode mode = Mode.of(command);
+        if (args.length < 2 || args.length > (mode.takesDirection() ? 4 : 3)) {
+            Messages.send(player, "usage", "usage", "/" + label + " <pattern> <radius> [tolerance]"
+                    + (mode.takesDirection() ? " [direction]" : ""));
             return true;
         }
         // Read on each use, so that /facets reload applies it
@@ -80,9 +101,14 @@ public final class FuzzyFillCommand implements TabExecutor {
             Messages.send(player, "fuzzyfill.radius-range", "max", maxRadius);
             return true;
         }
-        Integer tolerance = args.length == 3 ? number(player, args[2]) : Integer.valueOf(DEFAULT_TOLERANCE);
-        if (tolerance == null) {
-            return true;
+        // The tolerance can be left out before the direction
+        int next = 2;
+        Integer tolerance = DEFAULT_TOLERANCE;
+        if (args.length > next && (args.length == 4 || !mode.takesDirection() || isNumber(args[next]))) {
+            tolerance = number(player, args[next++]);
+            if (tolerance == null) {
+                return true;
+            }
         }
         if (tolerance < 0 || tolerance > radius) {
             Messages.send(player, "fuzzyfill.tolerance-range", "max", radius);
@@ -90,6 +116,15 @@ public final class FuzzyFillCommand implements TabExecutor {
         }
 
         com.sk89q.worldedit.entity.Player actor = BukkitAdapter.adapt(player);
+        BlockVector3 direction = BlockVector3.UNIT_MINUS_Y;
+        if (args.length > next) {
+            try {
+                direction = WorldEdit.getInstance().getDirection(actor, args[next].toLowerCase(Locale.ROOT));
+            } catch (UnknownDirectionException e) {
+                Messages.send(player, "fuzzyfill.invalid-direction", "value", args[next]);
+                return true;
+            }
+        }
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(actor);
         World world = actor.getWorld();
         Pattern pattern;
@@ -109,15 +144,15 @@ public final class FuzzyFillCommand implements TabExecutor {
         BlockVector3 start = BlockVector3.at(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         int r = radius;
         int t = tolerance;
-        Mode mode = Mode.of(command);
+        BlockVector3 d = direction;
         String name = "/" + command.getName().toLowerCase(Locale.ROOT);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             EditSession editSession = session.createEditSession(actor, name);
             int minY = world.getMinY();
             int maxY = world.getMaxY();
             try {
-                List<BlockVector3> blocks = FuzzyFill.blocks(start, r, t, mode == Mode.LAYER,
-                        position -> position.y() >= minY && position.y() <= maxY && mode.allows(position.y(), start.y())
+                List<BlockVector3> blocks = FuzzyFill.blocks(start, r, t, mode == Mode.LAYER ? d : null,
+                        position -> position.y() >= minY && position.y() <= maxY && mode.allows(position, start, d)
                                 && editSession.getBlock(position).getBlockType().getMaterial().isAir());
                 if (blocks.isEmpty()) {
                     Messages.send(player, editSession.getBlock(start).getBlockType().getMaterial().isAir()
@@ -143,6 +178,15 @@ public final class FuzzyFillCommand implements TabExecutor {
         return true;
     }
 
+    private static boolean isNumber(String input) {
+        try {
+            Integer.parseInt(input);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
     private static Integer number(Player player, String input) {
         try {
             return Integer.parseInt(input);
@@ -155,10 +199,13 @@ public final class FuzzyFillCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         String last = args[args.length - 1];
+        boolean direction = Mode.of(command).takesDirection();
         return switch (args.length) {
             case 1 -> patternSuggestions(sender, last);
             case 2 -> filter(List.of("10", "20", "32", "48"), last);
-            case 3 -> filter(List.of("0", "1", "2", "3"), last);
+            case 3 -> filter(direction ? Stream.concat(TOLERANCES.stream(), DIRECTIONS.stream()).toList() : TOLERANCES,
+                    last);
+            case 4 -> direction && isNumber(args[2]) ? filter(DIRECTIONS, last) : List.of();
             default -> List.of();
         };
     }

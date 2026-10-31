@@ -9,9 +9,14 @@ Curved surfaces stretched between splines: smooth (`smooth`), straight segments 
 Left click to start a frame, right click to add a point to it, then `//loft set <pattern>`.
 `//rpos1` and `//rpos2` remove the last frame or the last point.
 
-### Fuzzy fill — `//fuzzyfill <pattern> <radius> [tolerance]`
+### Fuzzy fill — `//fuzzyfill <pattern> <radius> [tolerance] [direction]`
 Fills the air around you without leaking through holes smaller than the tolerance, like a cave with an opening in its wall.
-`//fuzzyfillh` only fills the layer of your feet, `//fuzzyfillr` that layer and everything below it.
+Named after WorldEdit's `//fill` and `//fillr`:
+- `//fuzzyfill` fills the layer of your feet, across the direction.
+- `//fuzzyfillr` fills that layer and everything past it in the direction.
+- `//fuzzyfills <pattern> <radius> [tolerance]` fills the whole sphere around you.
+
+The direction is `down` by default and takes the directions of `//fill`: `up`, `down`, `north`, `south`, `east`, `west`, `me`, `forward`, `back`, `left`, `right`.
 
 ### Symmetry — `//sym`
 Copies around a point, in real time, the blocks you place and break by hand, the text written on signs, and every FAWE edit (commands, brushes, pastes...).
@@ -54,7 +59,7 @@ Every glass pane (`glass_pane` and all stained glass panes), for example `//repl
 | Permission | Access |
 |---|---|
 | `facets.loft` | Loft selection, `//loft`, `//rpos1`, `//rpos2` |
-| `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillh`, `//fuzzyfillr` |
+| `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillr`, `//fuzzyfills` |
 | `facets.symmetry` | `//sym` |
 | `facets.menu` | The menu (right click with a nether star) |
 | `facets.variants` | `/variant`, `/family` |

@@ -20,16 +20,16 @@ commands:
     usage: "//rpos2 [amount] [-r | -c]"
     permission: facets.loft
   /fuzzyfill:
-    description: Fills the air around you without going through the holes up to the tolerance.
-    usage: "//fuzzyfill <pattern> <radius> [tolerance]"
-    permission: facets.fuzzyfill
-  /fuzzyfillh:
-    description: Like //fuzzyfill, only in the layer of your feet.
-    usage: "//fuzzyfillh <pattern> <radius> [tolerance]"
+    description: Fills the layer of air at your feet without going through the holes up to the tolerance.
+    usage: "//fuzzyfill <pattern> <radius> [tolerance] [direction]"
     permission: facets.fuzzyfill
   /fuzzyfillr:
-    description: Like //fuzzyfill, only at the level of your feet and below.
-    usage: "//fuzzyfillr <pattern> <radius> [tolerance]"
+    description: Like //fuzzyfill, in the layer of your feet and everything past it in the direction.
+    usage: "//fuzzyfillr <pattern> <radius> [tolerance] [direction]"
+    permission: facets.fuzzyfill
+  /fuzzyfills:
+    description: Like //fuzzyfill, in the whole sphere around you.
+    usage: "//fuzzyfills <pattern> <radius> [tolerance]"
     permission: facets.fuzzyfill
   /sym:
     description: Copies the blocks placed by hand or with FAWE around a symmetry point.
@@ -56,7 +56,7 @@ permissions:
     description: Use the loft selection and its commands.
     default: op
   facets.fuzzyfill:
-    description: Use //fuzzyfill, //fuzzyfillh and //fuzzyfillr.
+    description: Use //fuzzyfill, //fuzzyfillr and //fuzzyfills.
     default: op
   facets.symmetry:
     description: Use //sym and its symmetry.

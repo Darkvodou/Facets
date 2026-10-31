@@ -2,6 +2,7 @@ package fr.darkvodou.facets.fill;
 
 import com.sk89q.worldedit.math.BlockVector3;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -12,7 +13,7 @@ import java.util.function.Predicate;
  * The fill is made of cubes of side tolerance + 1 that move through the air without touching a block:
  * they cannot pass a hole whose smallest side is at most the tolerance. The air next to these cubes is
  * added too, which plugs the holes and fills the corners the cubes do not reach.
- * A flat fill (a single layer of blocks) uses squares instead of cubes.
+ * A flat fill (a single layer of blocks, across any axis) uses squares instead of cubes.
  */
 public final class FuzzyFill {
 
@@ -20,9 +21,10 @@ public final class FuzzyFill {
 
     private final int radius;
     private final int n;
-    private final int side;
-    // Height of the cubes: 1 for a flat fill
+    // Sides of the cubes: 1 across a flat fill
+    private final int sideX;
     private final int sideY;
+    private final int sideZ;
     private final BlockVector3 origin;
 
     private final boolean[] air;
@@ -32,11 +34,13 @@ public final class FuzzyFill {
     // Sums over the box [0, x) x [0, y) x [0, z), of size (n + 1)^3
     private final int[] sums;
 
-    private FuzzyFill(BlockVector3 start, int radius, int tolerance, boolean flat) {
+    private FuzzyFill(BlockVector3 start, int radius, int tolerance, @Nullable BlockVector3 flat) {
         this.radius = radius;
         this.n = 2 * radius + 1;
-        this.side = tolerance + 1;
-        this.sideY = flat ? 1 : side;
+        int side = tolerance + 1;
+        this.sideX = flat != null && flat.x() != 0 ? 1 : side;
+        this.sideY = flat != null && flat.y() != 0 ? 1 : side;
+        this.sideZ = flat != null && flat.z() != 0 ? 1 : side;
         this.origin = start.subtract(radius, radius, radius);
         this.air = new boolean[n * n * n];
         this.order = new int[n * n * n];
@@ -47,11 +51,12 @@ public final class FuzzyFill {
      * @param start     where the fill starts
      * @param radius    the fill stays in the sphere of this radius around the start
      * @param tolerance the largest hole (smallest side, in blocks) the fill does not go through; 0 fills everything
-     * @param flat      whether the air is a single layer of blocks (squares are moved instead of cubes)
+     * @param flat      the direction across the air when it is a single layer of blocks (squares are moved
+     *                  instead of cubes), or null
      * @param isAir     whether a block can be filled
      * @return the blocks to fill, empty if the start is not air or no space around it is wider than the tolerance
      */
-    public static List<BlockVector3> blocks(BlockVector3 start, int radius, int tolerance, boolean flat,
+    public static List<BlockVector3> blocks(BlockVector3 start, int radius, int tolerance, @Nullable BlockVector3 flat,
                                             Predicate<BlockVector3> isAir) {
         if (radius < 0 || tolerance < 0 || tolerance > 2 * radius) {
             throw new IllegalArgumentException("radius " + radius + ", tolerance " + tolerance);
@@ -76,7 +81,7 @@ public final class FuzzyFill {
         for (int k = 0; k < orderSize; k++) {
             int cell = order[k];
             int x = x(cell), y = y(cell), z = z(cell);
-            covered[cell] = box(Math.max(0, x - side + 1), Math.max(0, y - sideY + 1), Math.max(0, z - side + 1),
+            covered[cell] = box(Math.max(0, x - sideX + 1), Math.max(0, y - sideY + 1), Math.max(0, z - sideZ + 1),
                     x + 1, y + 1, z + 1) > 0;
         }
 
@@ -132,9 +137,9 @@ public final class FuzzyFill {
         for (int k = 0; k < orderSize; k++) {
             int cell = order[k];
             int x = x(cell), y = y(cell), z = z(cell);
-            for (int cx = Math.max(0, x - side + 1); cx <= x; cx++) {
+            for (int cx = Math.max(0, x - sideX + 1); cx <= x; cx++) {
                 for (int cy = Math.max(0, y - sideY + 1); cy <= y; cy++) {
-                    for (int cz = Math.max(0, z - side + 1); cz <= z; cz++) {
+                    for (int cz = Math.max(0, z - sideZ + 1); cz <= z; cz++) {
                         if (fits(cx, cy, cz)) {
                             return index(cx, cy, cz);
                         }
@@ -175,11 +180,11 @@ public final class FuzzyFill {
     }
 
     private boolean fits(int x, int y, int z) {
-        if (x < 0 || y < 0 || z < 0 || x + side > n || y + sideY > n || z + side > n) {
+        if (x < 0 || y < 0 || z < 0 || x + sideX > n || y + sideY > n || z + sideZ > n) {
             return false;
         }
         // The sums count the blocks
-        return box(x, y, z, x + side, y + sideY, z + side) == 0;
+        return box(x, y, z, x + sideX, y + sideY, z + sideZ) == 0;
     }
 
     private boolean touches(boolean[] covered, int cell) {

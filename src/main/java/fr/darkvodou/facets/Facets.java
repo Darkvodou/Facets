@@ -64,8 +64,8 @@ public final class Facets extends JavaPlugin {
         getServer().getScheduler().runTask(this, priority::takeOver);
         FuzzyFillCommand fuzzyFill = new FuzzyFillCommand(this);
         register("/fuzzyfill", fuzzyFill);
-        register("/fuzzyfillh", fuzzyFill);
         register("/fuzzyfillr", fuzzyFill);
+        register("/fuzzyfills", fuzzyFill);
         symmetries = new SymmetrySessions(loadSymmetryConfig(new ArrayList<>()));
         symmetryListener = new SymmetryListener(this, symmetries);
         SymmetryListener.allowExtent();

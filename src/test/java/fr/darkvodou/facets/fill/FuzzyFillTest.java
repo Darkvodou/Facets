@@ -25,7 +25,7 @@ class FuzzyFillTest {
     }
 
     private static Set<BlockVector3> fill(Predicate<BlockVector3> isAir, int radius, int tolerance) {
-        return new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), radius, tolerance, false, isAir));
+        return new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), radius, tolerance, null, isAir));
     }
 
     @Test
@@ -69,7 +69,7 @@ class FuzzyFillTest {
     void fillsOneLayerWithSquares() {
         BlockVector3 hole = BlockVector3.at(4, 1, 0);
         Predicate<BlockVector3> cave = cave(Set.of(hole));
-        Set<BlockVector3> filled = new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), 20, 1, true,
+        Set<BlockVector3> filled = new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), 20, 1, BlockVector3.UNIT_Y,
                 position -> position.y() == 1 && cave.test(position)));
         assertEquals(7 * 7 + 1, filled.size());
         assertTrue(filled.contains(hole));
@@ -77,17 +77,28 @@ class FuzzyFillTest {
     }
 
     @Test
+    void fillsAVerticalLayerWithSquares() {
+        BlockVector3 hole = BlockVector3.at(4, 2, 0);
+        Predicate<BlockVector3> cave = cave(Set.of(hole));
+        Set<BlockVector3> filled = new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), 20, 1, BlockVector3.UNIT_Z,
+                position -> position.z() == 0 && cave.test(position)));
+        assertEquals(7 * 5 + 1, filled.size());
+        assertTrue(filled.contains(hole));
+        assertFalse(filled.contains(BlockVector3.at(5, 2, 0)));
+    }
+
+    @Test
     void fillsBelowWithoutGoingOverAWall() {
         // The hole is above the feet: the fill below cannot use it
         Predicate<BlockVector3> cave = cave(Set.of(BlockVector3.at(4, 3, 0), BlockVector3.at(4, 3, 1),
                 BlockVector3.at(4, 4, 0), BlockVector3.at(4, 4, 1)));
-        Set<BlockVector3> filled = new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), 20, 1, false,
+        Set<BlockVector3> filled = new HashSet<>(FuzzyFill.blocks(BlockVector3.at(0, 1, 0), 20, 1, null,
                 position -> position.y() <= 1 && cave.test(position)));
         assertEquals(7 * 2 * 7, filled.size());
     }
 
     @Test
     void doesNothingInsideABlock() {
-        assertEquals(List.of(), FuzzyFill.blocks(BlockVector3.at(0, 0, 0), 5, 1, false, position -> false));
+        assertEquals(List.of(), FuzzyFill.blocks(BlockVector3.at(0, 0, 0), 5, 1, null, position -> false));
     }
 }
