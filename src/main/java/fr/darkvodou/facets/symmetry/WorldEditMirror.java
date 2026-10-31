@@ -59,6 +59,10 @@ final class WorldEditMirror {
         }
 
         Map<String, String> transformed = BlockStateMirror.transform(values, allowed, transform);
+        if (transformed == null) {
+            // Placed as the player placed it
+            return state;
+        }
         BlockState result = state;
         for (Map.Entry<String, String> entry : transformed.entrySet()) {
             if (entry.getValue().equals(values.get(entry.getKey()))) {

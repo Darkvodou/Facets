@@ -2,11 +2,16 @@ package fr.darkvodou.facets.symmetry;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class BlockStateMirrorTest {
 
@@ -72,10 +77,68 @@ class BlockStateMirrorTest {
     }
 
     @Test
-    void keepsStairsHorizontalInThreeDimensions() {
-        // Turned so that east becomes up: stairs cannot face up, the facing stays
-        Transform eastToUp = Transform.SWAP_XY;
-        assertEquals("east", apply(stairs("east", "bottom", "straight"), STAIRS, eastToUp).get("facing"));
+    void turnsStairsOnTheirSide() {
+        // Swapping east and up: the step on the top west becomes the step on the bottom east... seen from the side,
+        // the stairs climb to the west and hang from the top
+        assertEquals(stairs("west", "top", "straight"), apply(stairs("east", "bottom", "straight"), STAIRS, Transform.SWAP_XY));
+        // Facing north, the step runs along x, which becomes vertical: no stairs have a vertical step
+        assertNull(apply(stairs("north", "bottom", "straight"), STAIRS, Transform.SWAP_XY));
+    }
+
+    @Test
+    void turnsStairsTheWayTheirShapeTurns() {
+        Transform[] all = SymmetryType.MEGASTAR.transforms().toArray(new Transform[0]);
+        for (String facing : HORIZONTAL) {
+            for (String half : List.of("bottom", "top")) {
+                for (String shape : STAIRS.get("shape")) {
+                    for (Transform transform : all) {
+                        Map<String, String> result = apply(stairs(facing, half, shape), STAIRS, transform);
+                        String name = facing + " " + half + " " + shape + " " + transform;
+                        if (result == null) {
+                            // Only outer corners and straight stairs whose step turns vertical cannot follow
+                            assertFalse(shape.startsWith("inner") || transform.keepsVertical(), name);
+                            continue;
+                        }
+                        assertEquals(turnedEighths(facing, half, shape, transform),
+                                Set.copyOf(BlockStateMirror.eighths(result.get("facing"), result.get("half"),
+                                        result.get("shape"))), name);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void keepsTheTurnedFacingWhenItFits() {
+        for (Transform transform : SymmetryType.MEGASTAR.transforms()) {
+            if (transform.keepsVertical()) {
+                Map<String, String> result = apply(stairs("north", "bottom", "outer_left"), STAIRS, transform);
+                assertNotNull(result, transform.toString());
+                assertEquals(transform.direction("north"), result.get("facing"));
+            }
+        }
+    }
+
+    private static Set<Integer> turnedEighths(String facing, String half, String shape, Transform transform) {
+        Set<Integer> turned = new HashSet<>();
+        for (int eighth : BlockStateMirror.eighths(facing, half, shape)) {
+            int[] v = transform.apply((eighth & 1) == 1 ? 1 : -1, (eighth & 2) == 2 ? 1 : -1, (eighth & 4) == 4 ? 1 : -1);
+            turned.add((v[0] > 0 ? 1 : 0) | (v[1] > 0 ? 2 : 0) | (v[2] > 0 ? 4 : 0));
+        }
+        return turned;
+    }
+
+    @Test
+    void turnsBlocksOnTheirSideWhenTheyCan() {
+        Map<String, List<String>> log = Map.of("axis", List.of("x", "y", "z"));
+        assertEquals(state("axis", "y"), apply(state("axis", "x"), log, Transform.SWAP_XY));
+        Map<String, List<String>> piston = Map.of("facing", List.of("north", "south", "east", "west", "up", "down"),
+                "extended", List.of("true", "false"));
+        assertEquals(state("facing", "up", "extended", "false"),
+                apply(state("facing", "east", "extended", "false"), piston, Transform.SWAP_XY));
+        Map<String, List<String>> slab = Map.of("type", List.of("top", "bottom", "double"));
+        assertEquals(state("type", "double"), apply(state("type", "double"), slab, Transform.SWAP_XY));
+        assertNull(apply(state("type", "bottom"), slab, Transform.SWAP_XY));
     }
 
     @Test
@@ -148,8 +211,8 @@ class BlockStateMirrorTest {
     }
 
     @Test
-    void keepsValuesTheBlockCannotTake() {
+    void cannotTakeValuesTheBlockDoesNotHave() {
         Map<String, List<String>> hopper = Map.of("facing", List.of("down", "north", "south", "east", "west"));
-        assertEquals("down", apply(state("facing", "down"), hopper, Transform.MIRROR_Y).get("facing"));
+        assertNull(apply(state("facing", "down"), hopper, Transform.MIRROR_Y));
     }
 }
