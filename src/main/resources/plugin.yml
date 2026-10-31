@@ -43,7 +43,7 @@ commands:
   /replacecolor:
     description: Changes the color of the blocks in the selection, keeping their state.
     usage: "//replacecolor [color] [new color]"
-    aliases: [/rc]
+    aliases: [/cr]
     permission: facets.replacecolor
   /typereplace:
     description: Changes the type of the blocks in the selection (oak to spruce), keeping their state.
