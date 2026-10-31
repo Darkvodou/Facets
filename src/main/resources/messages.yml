@@ -89,6 +89,37 @@ symmetry:
   info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
   info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
 
+replacecolor:
+  no-selection: "{error}Make a selection first."
+  unknown-color: "{error}Unknown color: {color}. Colors: {colors}"
+  same-color: "{error}Choose two different colors."
+  done: "{info}Operation completed ({count})."
+  none: "{warning}No {color} block in the selection has a block of the new color."
+  failed: "{error}An error occurred: {message}"
+  title-from: "Color to replace"
+  title-to: "Replace {color} with"
+  from-lore: "&7Click to replace this color"
+  to-lore: "&7Click to replace {color} with this color"
+  chosen-lore: "&aColor to replace"
+  back: "&eBack"
+
+typereplace:
+  no-selection: "{error}Make a selection first."
+  unknown-type: "{error}Unknown type: {type}. Types are like spruce_planks, spruce_log, stripped_spruce_log, diorite or stone_brick."
+  same-type: "{error}Choose two different types."
+  done: "{info}Operation completed ({count})."
+  none: "{warning}No {type} block in the selection has a block of the new type."
+  failed: "{error}An error occurred: {message}"
+  title-from: "Type to replace"
+  title-to: "Replace {type} with"
+  type: "&e{type}"
+  from-lore: "&7{count} blocks\n&7Click to replace this type"
+  to-lore: "&7{count} blocks\n&7Click to replace {type} with this type"
+  chosen-lore: "&a{count} blocks\n&aType to replace"
+  back: "&cBack"
+  previous: "&ePrevious page &7({page}/{pages})"
+  next: "&eNext page &7({page}/{pages})"
+
 variants:
   not-a-block: "{error}Hold a block to see its variants."
   no-variant: "{error}{block} has no variants (/family for the blocks of its family)."

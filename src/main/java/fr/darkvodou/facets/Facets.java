@@ -9,6 +9,8 @@ import fr.darkvodou.facets.loft.RemovePositionCommand;
 import fr.darkvodou.facets.mask.PanesMaskParser;
 import fr.darkvodou.facets.menu.MaskFavorites;
 import fr.darkvodou.facets.menu.MenuListener;
+import fr.darkvodou.facets.replace.ReplaceColorCommand;
+import fr.darkvodou.facets.replace.ReplaceTypeCommand;
 import fr.darkvodou.facets.symmetry.SymmetryCommand;
 import fr.darkvodou.facets.symmetry.SymmetryConfig;
 import fr.darkvodou.facets.symmetry.SymmetryListener;
@@ -73,6 +75,12 @@ public final class Facets extends JavaPlugin {
         getServer().getPluginManager().registerEvents(symmetryListener, this);
         register("/sym", new SymmetryCommand(symmetries));
         scheduleMarker(symmetries.config());
+        ReplaceColorCommand replaceColor = new ReplaceColorCommand(this);
+        getServer().getPluginManager().registerEvents(replaceColor, this);
+        register("/replacecolor", replaceColor);
+        ReplaceTypeCommand replaceType = new ReplaceTypeCommand(this);
+        getServer().getPluginManager().registerEvents(replaceType, this);
+        register("/typereplace", replaceType);
         menu = new MenuListener(this, symmetries, new MaskFavorites(this), loadMenuItem(new ArrayList<>()));
         getServer().getPluginManager().registerEvents(menu, this);
         VariantsMenu variants = new VariantsMenu(getLogger());
@@ -80,7 +88,7 @@ public final class Facets extends JavaPlugin {
         register("variant", variants);
         register("family", variants);
         register("facets", new FacetsCommand(this));
-        getLogger().info("Registered loft selection, //fuzzyfill, //sym, /variant, /family and the menu.");
+        getLogger().info("Registered loft selection, //fuzzyfill, //sym, //replacecolor, //typereplace, /variant, /family and the menu.");
     }
 
     @Override

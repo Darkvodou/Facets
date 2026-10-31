@@ -42,6 +42,23 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 | `star3d` | `star2d` + up/down mirror | 16 |
 | `megastar` | `star3d` around all three axes | 48 |
 
+### Replace color — `//replacecolor [color] [new color]`
+Changes the color of the blocks in the selection and keeps their state: with `red` and `lime`, a `red_bed`, a `red_shulker_box` and red stairs become lime ones, facing the same way. Shulker boxes keep their content and banners their patterns.
+Without colors, a chest opens to choose the color to replace, then the new one. Blocks with no version in the new color are left as they are.
+Undone with `//undo`.
+
+### Type replace — `//typereplace [type] [new type]`
+Same as the color replace for the type of the blocks. A type is a family of `/family` (`diorite`, `stone_brick`, `cobblestone`...), except for wood, split in four types:
+- `spruce_planks`: planks, stairs, slabs, fences, doors, trapdoors, signs...
+- `spruce_log`: logs and wood (`crimson_stem` for the nether woods)
+- `stripped_spruce_log`: stripped logs and wood (`stripped_crimson_stem`)
+- `spruce_leaves`: leaves and sapling
+
+With `oak_planks` and `spruce_planks`, oak stairs, slabs and doors become spruce ones; with `oak_planks` and `diorite`, oak stairs and slabs become diorite ones.
+Full blocks with no version in the new type become its full block: with `spruce_log` and `cobblestone`, spruce logs and wood become cobblestone, with `spruce_log` and `spruce_planks`, spruce planks, and with `spruce_log` and `stripped_spruce_log`, stripped logs (wood becomes stripped logs too). The other blocks with no version in the new type, like doors, are left as they are.
+Without types, a chest opens to choose the type to replace, then the new one.
+Undone with `//undo`.
+
 ### Menu
 Right click with a nether star to open the Facets menu: symmetry, selections and global masks (with favorites) in a few clicks.
 
@@ -61,6 +78,8 @@ Every glass pane (`glass_pane` and all stained glass panes), for example `//repl
 | `facets.loft` | Loft selection, `//loft`, `//rpos1`, `//rpos2` |
 | `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillr`, `//fuzzyfills` |
 | `facets.symmetry` | `//sym` |
+| `facets.replacecolor` | `//replacecolor` |
+| `facets.typereplace` | `//typereplace` |
 | `facets.menu` | The menu (right click with a nether star) |
 | `facets.variants` | `/variant`, `/family` |
 | `facets.reload` | `/facets reload` |

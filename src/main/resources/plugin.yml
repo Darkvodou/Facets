@@ -2,7 +2,7 @@ name: Facets
 version: '${version}'
 main: fr.darkvodou.facets.Facets
 api-version: '1.21'
-description: Adds extra masks, a loft selection, a fuzzy fill and a symmetry tool to FastAsyncWorldEdit.
+description: Adds extra masks, a loft selection, a fuzzy fill, a symmetry tool, a color replace and a type replace to FastAsyncWorldEdit.
 author: darkvodou
 depend: [FastAsyncWorldEdit]
 
@@ -36,6 +36,16 @@ commands:
     usage: "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]"
     aliases: [/symmetry]
     permission: facets.symmetry
+  /replacecolor:
+    description: Changes the color of the blocks in the selection, keeping their state.
+    usage: "//replacecolor [color] [new color]"
+    aliases: [/rc]
+    permission: facets.replacecolor
+  /typereplace:
+    description: Changes the type of the blocks in the selection (oak to spruce), keeping their state.
+    usage: "//typereplace [type] [new type]"
+    aliases: [/tr]
+    permission: facets.typereplace
   variant:
     description: Opens the variants of the block in hand (every stairs for oak_stairs).
     usage: "/variant"
@@ -60,6 +70,12 @@ permissions:
     default: op
   facets.symmetry:
     description: Use //sym and its symmetry.
+    default: op
+  facets.replacecolor:
+    description: Use //replacecolor.
+    default: op
+  facets.typereplace:
+    description: Use //typereplace.
     default: op
   facets.menu:
     description: Open the Facets menu with the menu item (a nether star by default).

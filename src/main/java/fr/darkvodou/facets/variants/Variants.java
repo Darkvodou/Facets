@@ -17,7 +17,7 @@ public final class Variants {
     /**
      * The family of a block (oak, stone_brick, white...) and its shape (stairs, slab, wool...), empty for a full block.
      */
-    record Key(String family, String shape) {
+    public record Key(String family, String shape) {
     }
 
     // Longest first, so _stained_glass_pane is not taken for _pane
@@ -37,7 +37,7 @@ public final class Variants {
     private Variants() {
     }
 
-    static Key key(String name) {
+    public static Key key(String name) {
         String family = name.toLowerCase(Locale.ROOT);
         String shape = "";
         // white_wool_stairs: stairs of the white family
@@ -66,7 +66,7 @@ public final class Variants {
     /**
      * Blocks a player can hold: no legacy, wall-mounted or infested blocks.
      */
-    static boolean holdable(Material material) {
+    public static boolean holdable(Material material) {
         return material.isBlock() && material.isItem() && !material.isAir() && !material.isLegacy()
                 && !material.name().startsWith("INFESTED_");
     }
