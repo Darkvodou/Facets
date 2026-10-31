@@ -2,6 +2,8 @@ package fr.darkvodou.facets;
 
 import com.sk89q.worldedit.WorldEdit;
 import fr.darkvodou.facets.fill.FuzzyFillCommand;
+import fr.darkvodou.facets.gravity.Gravity;
+import fr.darkvodou.facets.gravity.GravityCommand;
 import fr.darkvodou.facets.loft.LoftCommand;
 import fr.darkvodou.facets.loft.LoftConfig;
 import fr.darkvodou.facets.loft.LoftVisualizer;
@@ -38,6 +40,7 @@ public final class Facets extends JavaPlugin {
     private BukkitTask visualizerTask;
     private SymmetrySessions symmetries;
     private SymmetryListener symmetryListener;
+    private Gravity gravity;
     private BukkitTask markerTask;
     private MenuListener menu;
 
@@ -75,6 +78,10 @@ public final class Facets extends JavaPlugin {
         getServer().getPluginManager().registerEvents(symmetryListener, this);
         register("/sym", new SymmetryCommand(symmetries));
         scheduleMarker(symmetries.config());
+        gravity = new Gravity(this);
+        Gravity.allowExtent();
+        worldEdit.getEventBus().register(gravity);
+        register("/gravity", new GravityCommand(gravity));
         ReplaceColorCommand replaceColor = new ReplaceColorCommand(this);
         getServer().getPluginManager().registerEvents(replaceColor, this);
         register("/replacecolor", replaceColor);
@@ -88,13 +95,16 @@ public final class Facets extends JavaPlugin {
         register("variant", variants);
         register("family", variants);
         register("facets", new FacetsCommand(this));
-        getLogger().info("Registered loft selection, //fuzzyfill, //sym, //replacecolor, //typereplace, /variant, /family and the menu.");
+        getLogger().info("Registered loft selection, //fuzzyfill, //sym, //gravity, //replacecolor, //typereplace, /variant, /family and the menu.");
     }
 
     @Override
     public void onDisable() {
         if (symmetryListener != null) {
             WorldEdit.getInstance().getEventBus().unregister(symmetryListener);
+        }
+        if (gravity != null) {
+            WorldEdit.getInstance().getEventBus().unregister(gravity);
         }
     }
 

@@ -2,7 +2,7 @@ name: Facets
 version: '${version}'
 main: fr.darkvodou.facets.Facets
 api-version: '1.21'
-description: Adds extra masks, a loft selection, a fuzzy fill, a symmetry tool, a color replace and a type replace to FastAsyncWorldEdit.
+description: Adds extra masks, a loft selection, a fuzzy fill, a symmetry tool, a gravity toggle, a color replace and a type replace to FastAsyncWorldEdit.
 author: darkvodou
 depend: [FastAsyncWorldEdit]
 
@@ -36,6 +36,10 @@ commands:
     usage: "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]"
     aliases: [/symmetry]
     permission: facets.symmetry
+  /gravity:
+    description: Makes the sand, gravel, concrete powder and anvils set with FAWE fall (toggle).
+    usage: "//gravity"
+    permission: facets.gravity
   /replacecolor:
     description: Changes the color of the blocks in the selection, keeping their state.
     usage: "//replacecolor [color] [new color]"
@@ -70,6 +74,9 @@ permissions:
     default: op
   facets.symmetry:
     description: Use //sym and its symmetry.
+    default: op
+  facets.gravity:
+    description: Use //gravity.
     default: op
   facets.replacecolor:
     description: Use //replacecolor.

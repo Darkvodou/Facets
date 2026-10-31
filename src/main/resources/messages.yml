@@ -89,6 +89,10 @@ symmetry:
   info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
   info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
 
+gravity:
+  on: "{info}Gravity enabled: the sand, gravel, concrete powder and anvils you set with FAWE fall (//gravity to disable)."
+  off: "{info}Gravity disabled."
+
 replacecolor:
   no-selection: "{error}Make a selection first."
   unknown-color: "{error}Unknown color: {color}. Colors: {colors}"

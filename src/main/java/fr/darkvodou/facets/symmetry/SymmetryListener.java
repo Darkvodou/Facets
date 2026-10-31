@@ -1,12 +1,12 @@
 package fr.darkvodou.facets.symmetry;
 
-import com.fastasyncworldedit.core.configuration.Settings;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
+import fr.darkvodou.facets.FaweExtents;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -33,7 +33,6 @@ import org.bukkit.plugin.Plugin;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Copies what players with a symmetry change: FAWE edits through {@link SymmetryExtent}, and the blocks placed,
@@ -50,14 +49,10 @@ public final class SymmetryListener implements Listener {
     }
 
     /**
-     * FAWE only keeps the extents of the plugins it is told about, in its allowed-plugins setting.
+     * FAWE only keeps the extents of the plugins it is told about.
      */
     public static void allowExtent() {
-        List<String> allowed = Settings.settings().EXTENT.ALLOWED_PLUGINS;
-        String name = SymmetryExtent.class.getName();
-        if (allowed.stream().noneMatch(entry -> name.toLowerCase(Locale.ROOT).contains(entry.toLowerCase(Locale.ROOT)))) {
-            allowed.add(name);
-        }
+        FaweExtents.allow(SymmetryExtent.class);
     }
 
     @Subscribe
