@@ -109,7 +109,7 @@ replacecolor:
 
 typereplace:
   no-selection: "{error}Make a selection first."
-  unknown-type: "{error}Unknown type: {type}. Types are like spruce_planks, spruce_log, stripped_spruce_log, diorite or stone_brick."
+  unknown-type: "{error}Unknown type: {type}. Types are full blocks like spruce_planks, polished_granite, stone_bricks or white_wool."
   same-type: "{error}Choose two different types."
   done: "{info}Operation completed ({count})."
   none: "{warning}No {type} block in the selection has a block of the new type."

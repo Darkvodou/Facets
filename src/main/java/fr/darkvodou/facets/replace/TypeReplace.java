@@ -1,194 +1,121 @@
 package fr.darkvodou.facets.replace;
 
-import fr.darkvodou.facets.variants.CreativeOrder;
-import fr.darkvodou.facets.variants.Variants;
 import org.bukkit.Material;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Changes the type in a block name and keeps the rest: oak_stairs becomes spruce_stairs or diorite_stairs.
- * A type is a family of /family, except for wood, split in four types: spruce_planks (planks, stairs, slab, door...),
- * spruce_log (logs and wood), stripped_spruce_log (stripped logs and wood) and spruce_leaves (leaves and sapling).
+ * A type is a full block (spruce_planks, polished_granite, stone_bricks, white_wool...) with its stairs, slab, wall,
+ * fence, door... named after it. The waxed copper keeps its wax when the new type has a waxed version.
  */
 final class TypeReplace {
 
-    // Shapes of full blocks, "" for the blocks named after their type alone (cobblestone, stone_bricks)
-    private static final Set<String> FULL = Set.of("", "planks", "log", "wood", "stem", "hyphae", "block", "pillar",
-            "wool", "concrete", "concrete_powder", "terracotta", "glazed_terracotta", "stained_glass");
-    // The types a wood family is split in, by shape; the other shapes are planks
-    private static final Map<String, String> WOOD_TYPES = Map.of(
-            "log", "log", "wood", "log", "stem", "stem", "hyphae", "stem",
-            "leaves", "leaves", "sapling", "leaves", "nylium", "fungus", "fungus", "fungus", "roots", "fungus");
-    private static final List<String> WOOD_SUFFIXES = List.of("planks", "log", "stem", "leaves", "fungus");
-    private static final String STRIPPED = "stripped_";
+    // The types, by their full block, in the order of the menu
+    static final List<String> TYPES = List.of(
+            "oak_planks", "spruce_planks", "birch_planks", "jungle_planks", "acacia_planks", "dark_oak_planks",
+            "mangrove_planks", "bamboo_planks", "bamboo_mosaic", "cherry_planks", "pale_oak_planks",
+            "stone", "smooth_stone", "granite", "polished_granite", "diorite", "polished_diorite", "andesite",
+            "polished_andesite", "cobblestone", "mossy_cobblestone", "mossy_stone_bricks", "sandstone",
+            "cut_sandstone", "smooth_sandstone", "bricks", "red_sandstone", "cut_red_sandstone", "smooth_red_sandstone",
+            "stone_bricks", "nether_bricks", "red_nether_bricks", "quartz_block", "smooth_quartz", "purpur_block",
+            "prismarine", "prismarine_bricks", "dark_prismarine", "end_stone_bricks", "quartz_bricks", "blackstone",
+            "polished_blackstone", "polished_blackstone_bricks", "crimson_planks", "warped_planks",
+            "cobbled_deepslate", "polished_deepslate", "deepslate_bricks", "deepslate_tiles",
+            "cut_copper", "exposed_cut_copper", "weathered_cut_copper", "oxidized_cut_copper", "mud_bricks",
+            "resin_bricks", "tuff", "tuff_bricks", "polished_tuff",
+            "white_wool", "light_gray_wool", "gray_wool", "black_wool", "brown_wool", "red_wool", "orange_wool",
+            "yellow_wool", "lime_wool", "green_wool", "cyan_wool", "light_blue_wool", "blue_wool", "purple_wool",
+            "magenta_wool", "pink_wool");
+    // The other blocks of a type, named after its stem: oak_stairs, stone_brick_wall
+    private static final Set<String> SHAPES = Set.of("stairs", "slab", "wall", "fence", "fence_gate", "door",
+            "trapdoor", "button", "pressure_plate", "sign", "hanging_sign", "shelf");
+    private static final List<String> STEM_SUFFIXES = List.of("_planks", "_block");
+    private static final String WAXED = "waxed_";
 
-    private static volatile Set<String> woods;
     private static volatile Map<String, List<Material>> types;
 
     private TypeReplace() {
     }
 
     /**
-     * @return the families with planks (oak, crimson, bamboo...), split in several types
+     * @return the types of this server's version, with their blocks (the full block first), in the order of the menu
      */
-    static Set<String> woods() {
-        Set<String> known = woods;
-        if (known == null) {
-            known = Arrays.stream(Material.values())
-                    .filter(Variants::holdable)
-                    .map(material -> Variants.key(material.name()))
-                    .filter(key -> key.shape().equals("planks"))
-                    .map(Variants.Key::family)
-                    .collect(Collectors.toUnmodifiableSet());
-            woods = known;
-        }
-        return known;
-    }
-
-    /**
-     * @return the types of at least two blocks, with their blocks, in the order of the creative inventory
-     */
-    static Map<String, List<Material>> types(Logger logger) {
+    static Map<String, List<Material>> types() {
         Map<String, List<Material>> known = types;
         if (known == null) {
-            Comparator<Material> order = CreativeOrder.comparator(logger);
-            Set<String> woods = woods();
-            known = Arrays.stream(Material.values())
-                    .filter(Variants::holdable)
-                    .sorted(order)
-                    .collect(Collectors.groupingBy(material -> type(material.name().toLowerCase(Locale.ROOT), woods),
-                            LinkedHashMap::new, Collectors.toList()))
-                    .entrySet().stream()
-                    .filter(entry -> entry.getValue().size() > 1)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a,
-                            LinkedHashMap::new));
+            known = new LinkedHashMap<>();
+            for (String type : TYPES) {
+                Material full = Material.matchMaterial(type);
+                if (full == null || !full.isBlock()) {
+                    continue;
+                }
+                List<Material> blocks = new ArrayList<>(List.of(full));
+                Arrays.stream(Material.values())
+                        .filter(material -> material != full && material.isBlock() && !material.isLegacy())
+                        .filter(material -> shape(material.name().toLowerCase(Locale.ROOT), type) != null)
+                        .forEach(blocks::add);
+                known.put(type, List.copyOf(blocks));
+            }
+            known = Collections.unmodifiableMap(known);
             types = known;
         }
         return known;
     }
 
     /**
-     * @param woods the families split in several types, from {@link #woods()}
-     * @return the type of the block: spruce_planks for spruce_stairs, spruce_log for spruce_wood,
-     * stripped_spruce_log for stripped_spruce_wood, diorite for polished_diorite_slab
+     * @return the part of the names shared by the blocks of the type: oak for oak_planks, stone_brick for
+     * stone_bricks, quartz for quartz_block
      */
-    static String type(String name, Set<String> woods) {
-        Variants.Key key = Variants.key(name);
-        if (!woods.contains(key.family())) {
-            return key.family();
-        }
-        String type = WOOD_TYPES.getOrDefault(key.shape(), "planks");
-        boolean stripped = (type.equals("log") || type.equals("stem")) && name.startsWith(STRIPPED);
-        return (stripped ? STRIPPED : "") + key.family() + "_" + type;
-    }
-
-    /**
-     * @return the family of a type, the part of the block names it replaces: spruce for spruce_planks and
-     * stripped_spruce_log
-     */
-    static String family(String type, Set<String> woods) {
-        if (type.startsWith(STRIPPED)) {
-            String family = family(type.substring(STRIPPED.length()), woods);
-            if (woods.contains(family)) {
-                return family;
+    static String stem(String type) {
+        for (String suffix : STEM_SUFFIXES) {
+            if (type.endsWith(suffix)) {
+                return type.substring(0, type.length() - suffix.length());
             }
         }
-        for (String suffix : WOOD_SUFFIXES) {
-            String family = type.substring(0, Math.max(0, type.length() - suffix.length() - 1));
-            if (type.endsWith("_" + suffix) && woods.contains(family)) {
-                return family;
-            }
+        if (type.endsWith("bricks") || type.endsWith("tiles")) {
+            return type.substring(0, type.length() - 1);
         }
         return type;
     }
 
     /**
-     * @param base the full block of the new type ({@link #base}), or null if it has none
-     * @return the names to try for the block, best first: the same block in the new type (oak_stairs:
-     * spruce_stairs), then for a full block the full block of the new type (spruce_log: cobblestone);
-     * empty if it is not of that type
-     */
-    static List<String> retype(String name, String from, String to, @Nullable String base, Set<String> woods) {
-        if (!type(name, woods).equals(from)) {
-            return List.of();
-        }
-        List<String> names = new ArrayList<>();
-        String renamed = rename(name, family(from, woods), family(to, woods));
-        // spruce_log to spruce_planks or stripped_spruce_log gives spruce_log again, cobblestone_stairs to spruce_log
-        // gives spruce_stairs
-        if (renamed != null && type(renamed, woods).equals(to)) {
-            names.add(renamed);
-        }
-        if (base != null && full(name)) {
-            names.add(base);
-        }
-        return names;
-    }
-
-    /**
-     * @param blocks the blocks of the type, from {@link #types}
-     * @return the full block standing for the type (cobblestone, spruce_planks, quartz_block), or null if it has none
+     * @param name a block name, without the waxed_ prefix
+     * @return the shape of the block in the type ("" for the full block, stairs for oak_stairs in oak_planks), or
+     * null if it is not of that type
      */
     @Nullable
-    static String base(String type, List<Material> blocks) {
-        List<String> full = blocks.stream()
-                .map(block -> block.name().toLowerCase(Locale.ROOT))
-                .filter(TypeReplace::full)
-                .toList();
-        for (String name : List.of(type, type + "s", type + "_planks", type + "_block")) {
-            if (full.contains(name)) {
-                return name;
-            }
+    static String shape(String name, String type) {
+        if (name.equals(type)) {
+            return "";
         }
-        return full.isEmpty() ? null : full.getFirst();
-    }
-
-    /**
-     * @return whether the block is a full block: logs, wood, planks, bricks, wool... but not stairs or leaves
-     */
-    static boolean full(String name) {
-        return FULL.contains(Variants.key(name).shape());
-    }
-
-    /**
-     * @return the name with the family replaced (oak_stairs: spruce_stairs), or null if it is not of that family
-     */
-    @Nullable
-    static String rename(String name, String from, String to) {
-        if (!Variants.key(name).family().equals(from)) {
-            return null;
-        }
-        boolean pluralFrom = plural(from);
-        for (int i = name.indexOf(from); i >= 0; i = name.indexOf(from, i + 1)) {
-            int end = i + from.length();
-            if (i > 0 && name.charAt(i - 1) != '_') {
-                continue;
-            }
-            // stone_bricks for the stone_brick family
-            if (pluralFrom && name.startsWith("s", end) && (end + 1 == name.length() || name.charAt(end + 1) == '_')) {
-                return name.substring(0, i) + to + (plural(to) ? "s" : "") + name.substring(end + 1);
-            }
-            if (end == name.length() || name.charAt(end) == '_') {
-                // diorite becomes stone_bricks, not stone_brick
-                String suffix = end == name.length() && plural(to) ? "s" : "";
-                return name.substring(0, i) + to + suffix + name.substring(end);
-            }
+        String stem = stem(type) + "_";
+        if (name.startsWith(stem) && SHAPES.contains(name.substring(stem.length()))) {
+            return name.substring(stem.length());
         }
         return null;
     }
 
-    private static boolean plural(String family) {
-        return family.endsWith("brick") || family.endsWith("tile");
+    /**
+     * @return the names to try for the block, best first: the same block in the new type (oak_stairs: spruce_stairs),
+     * waxed first for a waxed block; empty if it is not of that type. The blocks with no version in the new type
+     * (oak_door in stone) are left as they are.
+     */
+    static List<String> retype(String name, String from, String to) {
+        boolean waxed = name.startsWith(WAXED);
+        String shape = shape(waxed ? name.substring(WAXED.length()) : name, from);
+        if (shape == null) {
+            return List.of();
+        }
+        String renamed = shape.isEmpty() ? to : stem(to) + "_" + shape;
+        return waxed ? List.of(WAXED + renamed, renamed) : List.of(renamed);
     }
 }

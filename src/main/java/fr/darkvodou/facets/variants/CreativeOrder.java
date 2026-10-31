@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * The order of the items in the creative inventory, read from the server's creative tabs (Bukkit has no API for it).
  * Minecraft's own names are used through reflection, since Paper runs with them on every supported version.
  */
-public final class CreativeOrder {
+final class CreativeOrder {
 
     private static volatile Map<Material, Integer> positions;
 
@@ -25,7 +25,7 @@ public final class CreativeOrder {
     /**
      * By position in the creative tabs; the items missing from them come last, in Material order.
      */
-    public static Comparator<Material> comparator(Logger logger) {
+    static Comparator<Material> comparator(Logger logger) {
         Map<Material, Integer> positions = positions(logger);
         return Comparator.comparingInt((Material material) -> positions.getOrDefault(material, Integer.MAX_VALUE))
                 .thenComparingInt(Material::ordinal);

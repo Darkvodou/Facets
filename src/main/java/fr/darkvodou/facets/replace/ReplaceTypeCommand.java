@@ -22,12 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * //typereplace [type] [new type]: changes the type of the blocks in the selection and keeps their state (from
  * oak_planks, oak_stairs and oak_slab become spruce_stairs and spruce_slab, or diorite_stairs and diorite_slab).
- * Full blocks with no version in the new type become its full block, the other blocks are left as they are.
+ * The blocks with no version in the new type are left as they are.
  * The types left out are chosen in a chest: the type to replace, then the new one.
  */
 public final class ReplaceTypeCommand implements TabExecutor, Listener {
@@ -78,7 +77,7 @@ public final class ReplaceTypeCommand implements TabExecutor, Listener {
             Messages.send(player, "usage", "usage", "/" + label + " [type] [new type]");
             return true;
         }
-        Map<String, List<Material>> types = TypeReplace.types(plugin.getLogger());
+        Map<String, List<Material>> types = TypeReplace.types();
         for (String arg : args) {
             if (!types.containsKey(arg.toLowerCase(Locale.ROOT))) {
                 Messages.send(player, "typereplace.unknown-type", "type", arg);
@@ -102,7 +101,7 @@ public final class ReplaceTypeCommand implements TabExecutor, Listener {
             return List.of();
         }
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
-        return TypeReplace.types(plugin.getLogger()).keySet().stream()
+        return TypeReplace.types().keySet().stream()
                 .filter(type -> type.startsWith(last) && (args.length == 1 || !type.equalsIgnoreCase(args[0])))
                 .sorted()
                 .toList();
@@ -118,7 +117,7 @@ public final class ReplaceTypeCommand implements TabExecutor, Listener {
             return;
         }
         int slot = event.getSlot();
-        int pages = pages(TypeReplace.types(plugin.getLogger()).size());
+        int pages = pages(TypeReplace.types().size());
         if (slot == PREVIOUS && view.page > 0) {
             open(player, view.from, view.page - 1);
             return;
@@ -155,7 +154,7 @@ public final class ReplaceTypeCommand implements TabExecutor, Listener {
      */
     private void open(Player player, String from, int page) {
         List<Map.Entry<String, List<Material>>> types =
-                new ArrayList<>(TypeReplace.types(plugin.getLogger()).entrySet());
+                new ArrayList<>(TypeReplace.types().entrySet());
         int pages = pages(types.size());
         View view = new View(from, Math.clamp(page, 0, pages - 1));
         for (int i = 0; i < PAGE && view.page * PAGE + i < types.size(); i++) {
@@ -194,10 +193,8 @@ public final class ReplaceTypeCommand implements TabExecutor, Listener {
             Messages.send(player, "typereplace.same-type");
             return;
         }
-        String base = TypeReplace.base(to, TypeReplace.types(plugin.getLogger()).get(to));
-        Set<String> woods = TypeReplace.woods();
         Replacement.apply(plugin, player, "/typereplace", MESSAGES,
-                name -> TypeReplace.retype(name, from, to, base, woods),
+                name -> TypeReplace.retype(name, from, to),
                 "type", pretty(from));
     }
 

@@ -53,15 +53,9 @@ Without colors, a chest opens to choose the color to replace, then the new one. 
 Undone with `//undo`.
 
 ### Type replace — `//typereplace [type] [new type]`
-Same as the color replace for the type of the blocks. A type is a family of `/family` (`diorite`, `stone_brick`, `cobblestone`...), except for wood, split in four types:
-- `spruce_planks`: planks, stairs, slabs, fences, doors, trapdoors, signs...
-- `spruce_log`: logs and wood (`crimson_stem` for the nether woods)
-- `stripped_spruce_log`: stripped logs and wood (`stripped_crimson_stem`)
-- `spruce_leaves`: leaves and sapling
-
-With `oak_planks` and `spruce_planks`, oak stairs, slabs and doors become spruce ones; with `oak_planks` and `diorite`, oak stairs and slabs become diorite ones.
-Full blocks with no version in the new type become its full block: with `spruce_log` and `cobblestone`, spruce logs and wood become cobblestone, with `spruce_log` and `spruce_planks`, spruce planks, and with `spruce_log` and `stripped_spruce_log`, stripped logs (wood becomes stripped logs too). The other blocks with no version in the new type, like doors, are left as they are.
-Without types, a chest opens to choose the type to replace, then the new one.
+Same as the color replace for the type of the blocks. A type is a full block with the stairs, slabs, walls, fences, doors... named after it: `spruce_planks`, `polished_granite`, `stone_bricks`, `cut_copper`, `white_wool` (with its stairs and slabs since 26.3)...
+With `oak_planks` and `spruce_planks`, oak stairs, slabs and doors become spruce ones; with `oak_planks` and `diorite`, oak planks, stairs and slabs become diorite ones and the doors are left as they are. Waxed copper stays waxed.
+Without types, a chest opens to choose the type to replace, then the new one. It lists the planks, the stones, bricks and sandstones, the nether, end and deepslate blocks, cut copper, tuff and the wools.
 Undone with `//undo`.
 
 ### Menu
