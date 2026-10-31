@@ -4,7 +4,7 @@
 # If you edited an older messages.yml, delete it so it is created again with the {info} / {error} colors.
 
 # Added before every message. FAWE's own prefix is "&8(&4&lFAWE&8)&7 "
-prefix: "&8(&4&lMORE&8)&7 "
+prefix: "&8(&4&lFACETS&8)&7 "
 
 # Colors used by the messages below through {info}, {error} and {warning}.
 # Info is gray like FAWE's messages. An empty color keeps the last color of the prefix.
