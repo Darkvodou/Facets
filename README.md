@@ -94,6 +94,8 @@ All of them default to operators.
 `config.yml` and `messages.yml` are created on first launch, and new options are added to them on each update.
 `/facets reload` reloads both files.
 
+Other plugins may have commands with the same name (Arceon also has `//loft`, `//replacecolor`...). The Facets commands listed in `commands.priority` go first, with their aliases; the other plugin's command stays available with its prefix, for example `/arceon:/loft`.
+
 ## Requirements
 - Paper 1.21+
 - FastAsyncWorldEdit 2.16+

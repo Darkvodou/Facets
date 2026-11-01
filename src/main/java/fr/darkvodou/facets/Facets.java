@@ -1,42 +1,34 @@
 package fr.darkvodou.facets;
 
 import com.sk89q.worldedit.WorldEdit;
-import fr.darkvodou.facets.fill.FuzzyFillCommand;
 import fr.darkvodou.facets.gravity.Gravity;
-import fr.darkvodou.facets.gravity.GravityCommand;
-import fr.darkvodou.facets.loft.LoftCommand;
 import fr.darkvodou.facets.loft.LoftConfig;
 import fr.darkvodou.facets.loft.LoftVisualizer;
-import fr.darkvodou.facets.loft.RemovePositionCommand;
 import fr.darkvodou.facets.mask.Masks;
 import fr.darkvodou.facets.menu.MaskFavorites;
 import fr.darkvodou.facets.menu.MenuListener;
-import fr.darkvodou.facets.replace.ReplaceColorCommand;
-import fr.darkvodou.facets.replace.ReplaceTypeCommand;
-import fr.darkvodou.facets.symmetry.SymmetryCommand;
 import fr.darkvodou.facets.symmetry.SymmetryConfig;
 import fr.darkvodou.facets.symmetry.SymmetryListener;
 import fr.darkvodou.facets.symmetry.SymmetryMarker;
 import fr.darkvodou.facets.symmetry.SymmetrySessions;
-import fr.darkvodou.facets.variants.VariantsMenu;
 import org.bukkit.Material;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class Facets extends JavaPlugin {
 
     private static final String CONFIG_FILE = "config.yml";
     private static final String MESSAGES_FILE = "messages.yml";
 
+    private CommandManager commands;
     private LoftVisualizer visualizer;
-    private LoftCommand loftCommand;
     private BukkitTask visualizerTask;
     private SymmetrySessions symmetries;
     private SymmetryListener symmetryListener;
@@ -52,49 +44,31 @@ public final class Facets extends JavaPlugin {
         ConfigFiles.update(this, CONFIG_FILE);
         reloadConfig();
         loadMessages();
-        LoftConfig config = loadLoftConfig(new ArrayList<>());
-        visualizer = new LoftVisualizer(config);
-        scheduleVisualizer(config);
-        loftCommand = new LoftCommand(this, visualizer, config);
-        getServer().getPluginManager().registerEvents(loftCommand, this);
-        RemovePositionCommand removePosition = new RemovePositionCommand();
-        // Arceon also has a //loft: ours goes first
-        CommandPriority priority = new CommandPriority(this, List.of(
-                register("/loft", loftCommand),
-                register("/rpos1", removePosition),
-                register("/rpos2", removePosition)));
-        getServer().getPluginManager().registerEvents(priority, this);
-        // Runs once the server has started, after the other plugins have registered their commands
-        getServer().getScheduler().runTask(this, priority::takeOver);
-        FuzzyFillCommand fuzzyFill = new FuzzyFillCommand(this);
-        register("/fuzzyfill", fuzzyFill);
-        register("/fuzzyfillr", fuzzyFill);
-        register("/fuzzyfills", fuzzyFill);
+        LoftConfig loftConfig = loadLoftConfig(new ArrayList<>());
+        visualizer = new LoftVisualizer(loftConfig);
+        scheduleVisualizer(loftConfig);
+
         symmetries = new SymmetrySessions(loadSymmetryConfig(new ArrayList<>()));
         symmetryListener = new SymmetryListener(this, symmetries);
         SymmetryListener.allowExtent();
         worldEdit.getEventBus().register(symmetryListener);
-        getServer().getPluginManager().registerEvents(symmetryListener, this);
-        register("/sym", new SymmetryCommand(symmetries));
+        listen(symmetryListener);
         scheduleMarker(symmetries.config());
+
         gravity = new Gravity(this);
         Gravity.allowExtent();
         worldEdit.getEventBus().register(gravity);
-        register("/gravity", new GravityCommand(gravity));
-        ReplaceColorCommand replaceColor = new ReplaceColorCommand(this);
-        getServer().getPluginManager().registerEvents(replaceColor, this);
-        register("/replacecolor", replaceColor);
-        ReplaceTypeCommand replaceType = new ReplaceTypeCommand(this);
-        getServer().getPluginManager().registerEvents(replaceType, this);
-        register("/typereplace", replaceType);
+
         menu = new MenuListener(this, symmetries, new MaskFavorites(this), loadMenuItem(new ArrayList<>()));
-        getServer().getPluginManager().registerEvents(menu, this);
-        VariantsMenu variants = new VariantsMenu(getLogger());
-        getServer().getPluginManager().registerEvents(variants, this);
-        register("variant", variants);
-        register("family", variants);
-        register("facets", new FacetsCommand(this));
-        getLogger().info("Registered loft selection, //fuzzyfill, //sym, //gravity, //replacecolor, //typereplace, /variant, /family and the menu.");
+        listen(menu);
+
+        commands = new CommandManager(this);
+        commands.registerAll(visualizer, loftConfig, symmetries, gravity);
+        loadCommandPriority(new ArrayList<>());
+    }
+
+    void listen(Listener listener) {
+        getServer().getPluginManager().registerEvents(listener, this);
     }
 
     @Override
@@ -119,12 +93,13 @@ public final class Facets extends JavaPlugin {
         List<String> warnings = new ArrayList<>();
         LoftConfig config = loadLoftConfig(warnings);
         visualizer.setConfig(config);
-        loftCommand.setConfig(config);
+        commands.setLoftConfig(config);
         scheduleVisualizer(config);
         SymmetryConfig symmetryConfig = loadSymmetryConfig(warnings);
         symmetries.setConfig(symmetryConfig);
         scheduleMarker(symmetryConfig);
         menu.setItem(loadMenuItem(warnings));
+        loadCommandPriority(warnings);
         return warnings;
     }
 
@@ -139,53 +114,52 @@ public final class Facets extends JavaPlugin {
     }
 
     private LoftConfig loadLoftConfig(List<String> warnings) {
-        return LoftConfig.load(getConfig(), warning -> {
-            warnings.add(warning);
-            getLogger().warning("config.yml: " + warning);
-        });
+        return LoftConfig.load(getConfig(), warn(warnings));
     }
 
     private SymmetryConfig loadSymmetryConfig(List<String> warnings) {
-        return SymmetryConfig.load(getConfig(), warning -> {
-            warnings.add(warning);
-            getLogger().warning("config.yml: " + warning);
-        });
+        return SymmetryConfig.load(getConfig(), warn(warnings));
     }
 
     private Material loadMenuItem(List<String> warnings) {
         String name = getConfig().getString("menu.item", "nether_star");
         Material material = Material.matchMaterial(name);
         if (material == null || !material.isItem() || material.isAir()) {
-            String warning = "menu.item: unknown item '" + name + "', using nether_star";
-            warnings.add(warning);
-            getLogger().warning("config.yml: " + warning);
+            warn(warnings).accept("menu.item: unknown item '" + name + "', using nether_star");
             return Material.NETHER_STAR;
         }
         return material;
     }
 
+    private void loadCommandPriority(List<String> warnings) {
+        commands.setPriority(getConfig().getStringList("commands.priority"), warn(warnings));
+    }
+
+    /**
+     * Collects a config.yml problem and logs it.
+     */
+    private Consumer<String> warn(List<String> warnings) {
+        return warning -> {
+            warnings.add(warning);
+            getLogger().warning("config.yml: " + warning);
+        };
+    }
+
     private void scheduleMarker(SymmetryConfig config) {
-        if (markerTask != null) {
-            markerTask.cancel();
-        }
-        markerTask = getServer().getScheduler().runTaskTimer(this, new SymmetryMarker(symmetries),
-                config.markerTicks(), config.markerTicks());
+        markerTask = reschedule(markerTask, new SymmetryMarker(symmetries), config.markerTicks());
     }
 
     private void scheduleVisualizer(LoftConfig config) {
-        if (visualizerTask != null) {
-            visualizerTask.cancel();
-        }
-        visualizerTask = getServer().getScheduler().runTaskTimer(this, visualizer, config.refreshTicks(), config.refreshTicks());
+        visualizerTask = reschedule(visualizerTask, visualizer, config.refreshTicks());
     }
 
-    private PluginCommand register(String name, TabExecutor executor) {
-        PluginCommand command = getCommand(name);
-        if (command == null) {
-            throw new IllegalStateException("Command " + name + " is missing from plugin.yml");
+    /**
+     * Cancels the previous task, if any, and runs the given one every {@code ticks} ticks.
+     */
+    private BukkitTask reschedule(BukkitTask previous, Runnable task, long ticks) {
+        if (previous != null) {
+            previous.cancel();
         }
-        command.setExecutor(executor);
-        command.setTabCompleter(executor);
-        return command;
+        return getServer().getScheduler().runTaskTimer(this, task, ticks, ticks);
     }
 }

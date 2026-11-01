@@ -73,3 +73,14 @@ symmetry:
 menu:
   # Item opening the Facets menu with a right click (facets.menu permission)
   item: nether_star
+
+commands:
+  # Facets commands that go before the ones of other plugins with the same name or alias (Arceon also has //loft,
+  # //replacecolor...). An alias works too: //cr gives priority to //replacecolor and //cr.
+  # The other plugin's command stays available with its prefix, for example /arceon:/loft.
+  priority:
+    - loft
+    - rpos1
+    - rpos2
+    - replacecolor
+    - typereplace
