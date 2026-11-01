@@ -7,6 +7,7 @@ import fr.darkvodou.facets.loft.LoftVisualizer;
 import fr.darkvodou.facets.mask.Masks;
 import fr.darkvodou.facets.menu.MaskFavorites;
 import fr.darkvodou.facets.menu.MenuListener;
+import fr.darkvodou.facets.pattern.Patterns;
 import fr.darkvodou.facets.symmetry.SymmetryConfig;
 import fr.darkvodou.facets.symmetry.SymmetryListener;
 import fr.darkvodou.facets.symmetry.SymmetryMarker;
@@ -39,7 +40,8 @@ public final class Facets extends JavaPlugin {
     @Override
     public void onEnable() {
         WorldEdit worldEdit = WorldEdit.getInstance();
-        Masks.register(worldEdit, getLogger());
+        Masks.register(worldEdit, getLogger(), this::aimRange);
+        Patterns.register(worldEdit, getLogger(), this::aimRange);
 
         ConfigFiles.update(this, CONFIG_FILE);
         reloadConfig();
@@ -129,6 +131,13 @@ public final class Facets extends JavaPlugin {
             return Material.NETHER_STAR;
         }
         return material;
+    }
+
+    /**
+     * The farthest block the {@code #faim} mask and pattern can take, read on each use.
+     */
+    private int aimRange() {
+        return getConfig().getInt("aim.max-range", 1024);
     }
 
     private void loadCommandPriority(List<String> warnings) {

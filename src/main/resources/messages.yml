@@ -208,3 +208,12 @@ menu:
     range-max: "&eMaximum"
     range-step: "&e{step}"
     range-step-lore: "&7Range {range}"
+
+aim:
+  player-only: "{error}#faim and #faimtype can only be used by a player."
+  no-block: "{error}#faim: you are not looking at a block within {range} blocks."
+
+current-mask:
+  player-only: "{error}{mask} can only be used by a player."
+  no-global: "{error}#gcurrent: you have no global mask (//gmask)."
+  no-brush: "{error}#fcurrent: the item in your hand is not a brush with a mask (//mask)."

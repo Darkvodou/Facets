@@ -67,12 +67,21 @@ With a block in hand, `/variant` shows its variants: with `oak_stairs`, every st
 The two buttons at the bottom of the menu switch between them.
 Left click puts the variant in hand, right click adds a stack of it to the inventory.
 
-### `#panes` mask
-Every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
+### `#panes` mask and pattern
+Mask: every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
+Pattern: a random glass pane for each block. A replaced pane keeps its connections, so `//replace #panes #panes` mixes the colors of a window without changing its shape.
 
 ### `#noocclusion` and `#occluded` masks
 `#noocclusion`: every block that lets the blocks behind it be seen, by its shape (stairs, slabs, fences, trapdoors...) or its transparency (glass, leaves, barriers...). Air and liquids are not included.
 `#occluded`: every full opaque block with a face seen through a `#noocclusion` neighbor. A face hidden by a full side of the neighbor (the back of a stairs, the bottom of a bottom slab) does not count.
+
+### `#faim` and `#faimtype` masks and patterns
+`#faim`: the block you are looking at, with its exact state (facing, half...). For example `//replace #faim stone` or `//set #faim`.
+`#faimtype`: the type of the block you are looking at. As a mask, every state of it (all the oak stairs, whatever their facing); as a pattern, each replaced block keeps its state when it has the same properties, so `//replace #stairs #faimtype` keeps the stairs' facing.
+The block is taken when the command is run, and must be within `aim.max-range` of `config.yml` (1024 blocks by default).
+
+### `#gcurrent` and `#fcurrent` masks
+`#gcurrent`: your current global mask (`//gmask`). `#fcurrent`: the mask of the brush in your hand (`//mask`). For example `//gmask #fcurrent` makes the brush's mask global, and `//mask #gcurrent` gives the global mask to the brush. They are copied when the command is run: changing the mask afterwards does not change them.
 
 ## Permissions
 

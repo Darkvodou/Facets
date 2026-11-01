@@ -70,6 +70,10 @@ symmetry:
     # Ticks between two refreshes (20 ticks = 1 second)
     refresh-ticks: 10
 
+aim:
+  # Farthest block the #faim mask and pattern can take (blocks)
+  max-range: 1024
+
 menu:
   # Item opening the Facets menu with a right click (facets.menu permission)
   item: nether_star
