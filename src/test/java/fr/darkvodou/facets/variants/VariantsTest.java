@@ -54,6 +54,8 @@ class VariantsTest {
         assertKey("white", "stained_glass_pane", "WHITE_STAINED_GLASS_PANE");
         assertKey("light_blue", "glazed_terracotta", "LIGHT_BLUE_GLAZED_TERRACOTTA");
         assertKey("glass", "pane", "GLASS_PANE");
+        assertKey("glass", "stained_glass", "GLASS");
+        assertKey("tinted_glass", "stained_glass", "TINTED_GLASS");
         assertKey("white", "stairs", "WHITE_WOOL_STAIRS");
         assertKey("light_gray", "slab", "LIGHT_GRAY_CONCRETE_SLAB");
     }

@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,6 +35,10 @@ public final class Variants {
     private static final Set<String> MODIFIERS = Set.of(
             "stripped", "chiseled", "cracked", "mossy", "polished", "smooth", "cut", "cobbled", "waxed", "mosaic");
 
+    // Full blocks shown with the variants of a shape they are not named after
+    private static final Map<String, String> EXTRA_SHAPES = Map.of(
+            "glass", "stained_glass", "tinted_glass", "stained_glass");
+
     private Variants() {
     }
 
@@ -59,6 +64,9 @@ public final class Variants {
         List<String> words = new ArrayList<>(List.of(family.split("_")));
         if (words.removeIf(MODIFIERS::contains) && !words.isEmpty()) {
             family = String.join("_", words);
+        }
+        if (shape.isEmpty()) {
+            shape = EXTRA_SHAPES.getOrDefault(name.toLowerCase(Locale.ROOT), "");
         }
         return new Key(family, shape);
     }
