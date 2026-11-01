@@ -8,6 +8,7 @@ import fr.darkvodou.facets.loft.LoftCommand;
 import fr.darkvodou.facets.loft.LoftConfig;
 import fr.darkvodou.facets.loft.LoftVisualizer;
 import fr.darkvodou.facets.loft.RemovePositionCommand;
+import fr.darkvodou.facets.mask.OcclusionMaskParser;
 import fr.darkvodou.facets.mask.PanesMaskParser;
 import fr.darkvodou.facets.menu.MaskFavorites;
 import fr.darkvodou.facets.menu.MenuListener;
@@ -48,7 +49,8 @@ public final class Facets extends JavaPlugin {
     public void onEnable() {
         WorldEdit worldEdit = WorldEdit.getInstance();
         worldEdit.getMaskFactory().register(new PanesMaskParser(worldEdit));
-        getLogger().info("Registered #panes mask.");
+        worldEdit.getMaskFactory().register(new OcclusionMaskParser(worldEdit));
+        getLogger().info("Registered #panes, #noocclusion and #occluded masks.");
 
         ConfigFiles.update(this, CONFIG_FILE);
         reloadConfig();

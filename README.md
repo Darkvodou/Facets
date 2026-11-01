@@ -70,6 +70,10 @@ Left click puts the variant in hand, right click adds a stack of it to the inven
 ### `#panes` mask
 Every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
 
+### `#noocclusion` and `#occluded` masks
+`#noocclusion`: every block that lets the blocks behind it be seen, by its shape (stairs, slabs, fences, trapdoors...) or its transparency (glass, leaves, barriers...). Air and liquids are not included.
+`#occluded`: every full opaque block with a face seen through a `#noocclusion` neighbor. A face hidden by a full side of the neighbor (the back of a stairs, the bottom of a bottom slab) does not count.
+
 ## Permissions
 
 | Permission | Access |
