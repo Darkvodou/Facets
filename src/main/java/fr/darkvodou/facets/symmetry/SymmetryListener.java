@@ -28,6 +28,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
 import javax.annotation.Nullable;
@@ -128,6 +129,14 @@ public final class SymmetryListener implements Listener {
                 }
             }
         });
+    }
+
+    /**
+     * The symmetry does not outlive the session.
+     */
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        sessions.remove(event.getPlayer().getUniqueId());
     }
 
     @Nullable
