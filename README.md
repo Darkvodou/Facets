@@ -29,8 +29,19 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 | `//sym type <type>` | Changes the type without moving the point |
 | `//sym range <blocks \| max>` | Range around the point, capped by the configuration |
 | `//sym toggle` | Pauses or resumes |
-| `//sym off` | Removes the symmetry |
+| `//sym off` | Removes the symmetry, and the second one |
 | `//sym info` | Shows the current symmetry |
+
+A second symmetry, set with `//sym2`, copies the blocks and the copies of the first:
+
+| Command | Effect |
+|---|---|
+| `//sym2 set [type]` | Puts the second symmetry point at your feet |
+| `//sym2 type <type>` | Changes its type without moving the point |
+| `//sym2 off` | Removes the second symmetry, keeping the first |
+| `//sym2 info` | Shows the second symmetry |
+
+The range and `//sym toggle` apply to both. Each symmetry copies what is within the range of its own point. Two symmetries place at most 768 blocks per block (`megastar` + `star3d`): two `megastar` cannot be combined.
 
 | Type | Symmetry | Blocks per block placed |
 |---|---|---|

@@ -5,6 +5,7 @@ import com.fastasyncworldedit.core.regions.selector.PolyhedralRegionSelector;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.regions.selector.ConvexPolyhedralRegionSelector;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
@@ -243,27 +244,45 @@ public final class MenuListener implements Listener {
         }
     }
 
+    /**
+     * The first symmetry on the left of the first content row, the second on its right, the types of the first
+     * symmetry under them, then those of the second, and the range on the bottom row.
+     */
     private void symmetry(Menu menu, Player player) {
         Symmetry symmetry = symmetries.get(player.getUniqueId());
         int maxRange = symmetries.config().maxRange();
         if (symmetry == null) {
-            menu.set(19, item(Material.COMPASS, Messages.plain("menu.symmetry.status"),
+            menu.set(18, item(Material.COMPASS, Messages.plain("menu.symmetry.status"),
                     Messages.lines("menu.symmetry.status-none"), false));
         } else {
-            menu.set(19, item(Material.COMPASS, Messages.plain("menu.symmetry.status"),
+            menu.set(18, item(Material.COMPASS, Messages.plain("menu.symmetry.status"),
                     Messages.lines(symmetry.enabled() ? "menu.symmetry.status-on" : "menu.symmetry.status-off",
-                            "type", symmetry.type().id(), "copies", symmetry.type().copies(), "world", symmetry.world(),
-                            "position", symmetry.center().x() + ", " + symmetry.center().y() + ", " + symmetry.center().z(),
-                            "range", symmetry.range(maxRange)), symmetry.enabled()));
+                            "type", symmetry.type().id(), "copies", symmetry.copyCount(), "world", symmetry.world(),
+                            "position", position(symmetry.center()), "range", symmetry.range(maxRange)),
+                    symmetry.enabled()));
         }
-        menu.set(21, item(Material.TARGET, Messages.plain("menu.symmetry.set"), Messages.lines("menu.symmetry.set-lore"),
+        menu.set(19, item(Material.TARGET, Messages.plain("menu.symmetry.set"), Messages.lines("menu.symmetry.set-lore"),
                 false), click -> player.chat("//sym set"));
+        Symmetry.Second second = symmetry == null ? null : symmetry.second();
         if (symmetry != null) {
-            menu.set(22, item(symmetry.enabled() ? Material.LIME_DYE : Material.GRAY_DYE,
+            menu.set(20, item(symmetry.enabled() ? Material.LIME_DYE : Material.GRAY_DYE,
                     Messages.plain(symmetry.enabled() ? "menu.symmetry.pause" : "menu.symmetry.resume"),
                     Messages.lines("menu.symmetry.toggle-lore"), false), click -> player.chat("//sym toggle"));
-            menu.set(23, item(Material.BARRIER, Messages.plain("menu.symmetry.remove"),
+            menu.set(21, item(Material.BARRIER, Messages.plain("menu.symmetry.remove"),
                     Messages.lines("menu.symmetry.remove-lore"), false), click -> player.chat("//sym off"));
+
+            menu.set(23, item(Material.RECOVERY_COMPASS, Messages.plain("menu.symmetry.second-status"),
+                    second == null ? Messages.lines("menu.symmetry.second-none")
+                            : Messages.lines("menu.symmetry.second-set", "type", second.type().id(),
+                            "position", position(second.center()), "copies", symmetry.copyCount()),
+                    second != null && symmetry.enabled()));
+            menu.set(24, item(Material.LODESTONE, Messages.plain("menu.symmetry.add"),
+                    Messages.lines("menu.symmetry.add-lore"), false), click -> player.chat("//sym2 set"));
+            if (second != null) {
+                menu.set(25, item(Material.STRUCTURE_VOID, Messages.plain("menu.symmetry.remove-second"),
+                        Messages.lines("menu.symmetry.remove-second-lore"), false),
+                        click -> player.chat("//sym2 off"));
+            }
         }
 
         SymmetryType[] types = SymmetryType.values();
@@ -275,10 +294,26 @@ public final class MenuListener implements Listener {
                     click -> player.chat(symmetry == null ? "//sym set " + type.id() : "//sym type " + type.id()));
         }
 
+        // The types of the second symmetry: the first click places it at the player's feet
+        for (int i = 0; i < types.length; i++) {
+            SymmetryType type = types[i];
+            List<Component> lore = symmetry == null ? Messages.lines("menu.symmetry.second-type-first")
+                    : !Symmetry.combinable(symmetry.type(), type)
+                    ? Messages.lines("menu.symmetry.second-type-locked", "first", symmetry.type().id())
+                    : Messages.lines("menu.symmetry.second-type-lore", "copies", type.copies());
+            boolean selected = second != null && second.type() == type;
+            menu.set(36 + i, item(TYPE_ICONS[i], Messages.plain("menu.symmetry.second-type", "type", type.id()), lore,
+                    selected), click -> {
+                if (symmetry != null) {
+                    player.chat((second == null ? "//sym2 set " : "//sym2 type ") + type.id());
+                }
+            });
+        }
+
         if (symmetry != null) {
             int range = symmetry.range(maxRange);
             int[] steps = {-50, -10, -1, 1, 10, 50};
-            int[] slots = {37, 38, 39, 41, 42, 43};
+            int[] slots = {46, 47, 48, 50, 51, 52};
             for (int i = 0; i < steps.length; i++) {
                 int step = steps[i];
                 int target = Math.max(1, Math.min(maxRange, range + step));
@@ -287,14 +322,18 @@ public final class MenuListener implements Listener {
                         Messages.lines("menu.symmetry.range-step-lore", "range", target), false),
                         click -> player.chat("//sym range " + target));
             }
-            menu.set(36, item(Material.RED_CONCRETE, Messages.plain("menu.symmetry.range-min"),
+            menu.set(45, item(Material.RED_CONCRETE, Messages.plain("menu.symmetry.range-min"),
                     Messages.lines("menu.symmetry.range-step-lore", "range", 1), false), click -> player.chat("//sym range 1"));
-            menu.set(40, item(Material.SPYGLASS, Messages.plain("menu.symmetry.range", "range", range),
+            menu.set(49, item(Material.SPYGLASS, Messages.plain("menu.symmetry.range", "range", range),
                     Messages.lines("menu.symmetry.range-max-lore", "max", maxRange), false));
-            menu.set(44, item(Material.LIME_CONCRETE, Messages.plain("menu.symmetry.range-max"),
+            menu.set(53, item(Material.LIME_CONCRETE, Messages.plain("menu.symmetry.range-max"),
                     Messages.lines("menu.symmetry.range-step-lore", "range", maxRange), false),
                     click -> player.chat("//sym range max"));
         }
+    }
+
+    private static String position(BlockVector3 point) {
+        return point.x() + ", " + point.y() + ", " + point.z();
     }
 
     private static ItemStack item(Material material, Component name, List<Component> lore, boolean glint) {

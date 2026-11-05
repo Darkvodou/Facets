@@ -39,7 +39,8 @@ final class CommandManager {
         register(loft, "/loft");
         register(new RemovePositionCommand(), "/rpos1", "/rpos2");
         register(new FuzzyFillCommand(plugin), "/fuzzyfill", "/fuzzyfillr", "/fuzzyfills");
-        register(new SymmetryCommand(symmetries), "/sym");
+        register(new SymmetryCommand(symmetries, false), "/sym");
+        register(new SymmetryCommand(symmetries, true), "/sym2");
         register(new GravityCommand(gravity), "/gravity");
         ReplaceColorCommand replaceColor = new ReplaceColorCommand(plugin);
         plugin.listen(replaceColor);

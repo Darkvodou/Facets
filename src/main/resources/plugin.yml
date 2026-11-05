@@ -36,6 +36,11 @@ commands:
     usage: "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]"
     aliases: [/symmetry]
     permission: facets.symmetry
+  /sym2:
+    description: Adds a second symmetry point, which copies the first symmetry and its copies.
+    usage: "//sym2 [set [type] | type <type> | off | info]"
+    aliases: [/symmetry2]
+    permission: facets.symmetry
   /gravity:
     description: Makes the sand, gravel, concrete powder and anvils set with FAWE fall (toggle).
     usage: "//gravity"
@@ -73,7 +78,7 @@ permissions:
     description: Use //fuzzyfill, //fuzzyfillr and //fuzzyfills.
     default: op
   facets.symmetry:
-    description: Use //sym and its symmetry.
+    description: Use //sym, //sym2 and their symmetries.
     default: op
   facets.gravity:
     description: Use //gravity.

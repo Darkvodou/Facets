@@ -1,5 +1,6 @@
 package fr.darkvodou.facets.symmetry;
 
+import com.sk89q.worldedit.math.BlockVector3;
 import fr.darkvodou.facets.Trails;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Shows each player their symmetry point with particles, in a shape and a color of its own for each type.
+ * Shows each player their symmetry points with particles, in a shape and a color of its own for each type.
  * The shape follows the mirrors: a square for each plane, a star for the diagonals, a cube for megastar.
  * The colors of the planes are those of the axes in Minecraft (x red, y green, z blue). A paused symmetry is gray.
  * <p>
@@ -63,22 +64,28 @@ public final class SymmetryMarker implements Runnable {
             if (symmetry == null || !symmetry.world().equals(player.getWorld().getName())) {
                 continue;
             }
-            Location center = new Location(player.getWorld(), symmetry.center().x() + 0.5, symmetry.center().y() + 0.5,
-                    symmetry.center().z() + 0.5);
-            if (center.distanceSquared(player.getLocation()) > VIEW_DISTANCE * VIEW_DISTANCE) {
-                continue;
+            show(player, symmetry.center(), symmetry.type(), symmetry.enabled());
+            if (symmetry.second() != null) {
+                show(player, symmetry.second().center(), symmetry.second().type(), symmetry.enabled());
             }
-            Look look = LOOKS.get(symmetry.type());
-            Color color = symmetry.enabled() ? look.color() : PAUSED;
-            Particle.DustOptions dust = new Particle.DustOptions(color, DUST_SIZE);
-            for (Vector point : look.points()) {
-                Location location = center.clone().add(point);
-                if (Trails.SUPPORTED) {
-                    player.spawnParticle(Particle.TRAIL, location, 1, 0, 0, 0, 0,
-                            Trails.still(location, color, sessions.config().markerTicks()), true);
-                } else {
-                    player.spawnParticle(Particle.DUST, location, 1, 0, 0, 0, 0, dust, true);
-                }
+        }
+    }
+
+    private void show(Player player, BlockVector3 point, SymmetryType type, boolean enabled) {
+        Location center = new Location(player.getWorld(), point.x() + 0.5, point.y() + 0.5, point.z() + 0.5);
+        if (center.distanceSquared(player.getLocation()) > VIEW_DISTANCE * VIEW_DISTANCE) {
+            return;
+        }
+        Look look = LOOKS.get(type);
+        Color color = enabled ? look.color() : PAUSED;
+        Particle.DustOptions dust = new Particle.DustOptions(color, DUST_SIZE);
+        for (Vector offset : look.points()) {
+            Location location = center.clone().add(offset);
+            if (Trails.SUPPORTED) {
+                player.spawnParticle(Particle.TRAIL, location, 1, 0, 0, 0, 0,
+                        Trails.still(location, color, sessions.config().markerTicks()), true);
+            } else {
+                player.spawnParticle(Particle.DUST, location, 1, 0, 0, 0, 0, dust, true);
             }
         }
     }
