@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "fr.darkvodou"
-version = "0.7.0"
+version = "0.7.1"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(21))
