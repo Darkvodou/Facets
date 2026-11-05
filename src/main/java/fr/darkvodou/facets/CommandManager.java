@@ -9,6 +9,7 @@ import fr.darkvodou.facets.loft.LoftVisualizer;
 import fr.darkvodou.facets.loft.RemovePositionCommand;
 import fr.darkvodou.facets.replace.ReplaceColorCommand;
 import fr.darkvodou.facets.replace.ReplaceTypeCommand;
+import fr.darkvodou.facets.speed.SpeedCommand;
 import fr.darkvodou.facets.symmetry.SymmetryCommand;
 import fr.darkvodou.facets.symmetry.SymmetrySessions;
 import fr.darkvodou.facets.variants.VariantsMenu;
@@ -42,6 +43,7 @@ final class CommandManager {
         register(new SymmetryCommand(symmetries, false), "/sym");
         register(new SymmetryCommand(symmetries, true), "/sym2");
         register(new GravityCommand(gravity), "/gravity");
+        register(new SpeedCommand(), "speed");
         ReplaceColorCommand replaceColor = new ReplaceColorCommand(plugin);
         plugin.listen(replaceColor);
         register(replaceColor, "/replacecolor");

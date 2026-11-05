@@ -26,6 +26,7 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 | Command | Effect |
 |---|---|
 | `//sym set [type]` | Puts the symmetry point at your feet |
+| `//sym placeaim [type]` | Puts the symmetry point on the block you are looking at (up to `symmetry.aim-range`, 1024 blocks by default) |
 | `//sym type <type>` | Changes the type without moving the point |
 | `//sym range <blocks \| max>` | Range around the point, capped by the configuration |
 | `//sym toggle` | Pauses or resumes |
@@ -37,6 +38,7 @@ A second symmetry, set with `//sym2`, copies the blocks and the copies of the fi
 | Command | Effect |
 |---|---|
 | `//sym2 set [type]` | Puts the second symmetry point at your feet |
+| `//sym2 placeaim [type]` | Puts it on the block you are looking at |
 | `//sym2 type <type>` | Changes its type without moving the point |
 | `//sym2 off` | Removes the second symmetry, keeping the first |
 | `//sym2 info` | Shows the second symmetry |
@@ -73,6 +75,9 @@ Undone with `//undo`.
 ### Menu
 Right click with a nether star to open the Facets menu: symmetry (with the second point and its type), selections and global masks (with favorites) in a few clicks.
 
+### Speed — `/speed [speed]`
+Sets your flight speed when you are flying, else your walking speed. `1` is the usual speed, `10` the fastest, and decimals work: `/speed 0.5` is half the usual speed. `/speed` alone goes back to `1`.
+
 ### Variants and families — `/variant`, `/family`
 With a block in hand, `/variant` shows its variants: with `oak_stairs`, every stairs.
 `/family` shows its family: with `oak_stairs`, every oak block (planks, slab, fence, door, logs...).
@@ -82,6 +87,14 @@ Left click puts the variant in hand, right click adds a stack of it to the inven
 ### `#panes` mask and pattern
 Mask: every glass pane (`glass_pane` and all stained glass panes), for example `//replace #panes air`.
 Pattern: a random glass pane for each block. A replaced pane keeps its connections, so `//replace #panes #panes` mixes the colors of a window without changing its shape.
+
+### `#glass` mask and pattern
+Mask: every glass of Minecraft's `#impermeable` tag (`glass`, the stained glasses, `tinted_glass`) and every glass pane (`#panes`).
+Pattern: a random glass or glass pane for each block. A replaced pane keeps its connections.
+
+### `#fhotbar` mask and pattern
+Mask: every block of a type in your hotbar, whatever its state. For example `//replace #fhotbar stone`.
+Pattern: a random block of your hotbar for each block; each slot counts once, so a block in two slots comes twice as often. Items that are not blocks are ignored. The hotbar is read when the command is run.
 
 ### `#noocclusion` and `#occluded` masks
 `#noocclusion`: every block that lets the blocks behind it be seen, by its shape (stairs, slabs, fences, trapdoors...) or its transparency (glass, leaves, barriers...). Air and liquids are not included.
@@ -103,6 +116,7 @@ The block is taken when the command is run, and must be within `aim.max-range` o
 | `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillr`, `//fuzzyfills` |
 | `facets.symmetry` | `//sym`, `//sym2` |
 | `facets.gravity` | `//gravity` |
+| `facets.speed` | `/speed` |
 | `facets.replacecolor` | `//replacecolor` |
 | `facets.typereplace` | `//typereplace` |
 | `facets.menu` | The menu (right click with a nether star) |

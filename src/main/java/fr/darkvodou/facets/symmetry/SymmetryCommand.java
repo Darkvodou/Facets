@@ -3,6 +3,7 @@ package fr.darkvodou.facets.symmetry;
 import com.sk89q.worldedit.math.BlockVector3;
 import fr.darkvodou.facets.Messages;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -14,14 +15,14 @@ import java.util.Locale;
 import java.util.stream.Stream;
 
 /**
- * //sym [set [type] | type &lt;type&gt; | range &lt;blocks | max&gt; | toggle | off | info] for the first symmetry,
- * //sym2 [set [type] | type &lt;type&gt; | off | info] for the second, which copies the first one too.
+ * //sym [set [type] | placeaim [type] | type &lt;type&gt; | range &lt;blocks | max&gt; | toggle | off | info] for the first symmetry,
+ * //sym2 [set [type] | placeaim [type] | type &lt;type&gt; | off | info] for the second, which copies the first one too.
  * The range and the pause are those of the first symmetry, for both.
  */
 public final class SymmetryCommand implements TabExecutor {
 
-    private static final String USAGE = "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]";
-    private static final String USAGE_SECOND = "//sym2 [set [type] | type <type> | off | info]";
+    private static final String USAGE = "//sym [set [type] | placeaim [type] | type <type> | range <blocks | max> | toggle | off | info]";
+    private static final String USAGE_SECOND = "//sym2 [set [type] | placeaim [type] | type <type> | off | info]";
 
     private final SymmetrySessions sessions;
     // //sym2: acts on the second symmetry
@@ -41,7 +42,13 @@ public final class SymmetryCommand implements TabExecutor {
         String sub = args.length == 0 ? "info" : args[0].toLowerCase(Locale.ROOT);
         if (second) {
             switch (sub) {
-                case "set", "s" -> setSecond(player, args);
+                case "set", "s" -> setSecond(player, args, feet(player));
+                case "placeaim", "pa" -> {
+                    BlockVector3 aimed = aimed(player);
+                    if (aimed != null) {
+                        setSecond(player, args, aimed);
+                    }
+                }
                 case "type", "t" -> typeSecond(player, args);
                 case "off", "clear", "remove" -> offSecond(player);
                 case "info", "i" -> infoSecond(player);
@@ -50,7 +57,13 @@ public final class SymmetryCommand implements TabExecutor {
             return true;
         }
         switch (sub) {
-            case "set", "s" -> set(player, args);
+            case "set", "s" -> set(player, args, feet(player));
+            case "placeaim", "pa" -> {
+                BlockVector3 aimed = aimed(player);
+                if (aimed != null) {
+                    set(player, args, aimed);
+                }
+            }
             case "type", "t" -> type(player, args);
             case "range", "r" -> range(player, args);
             case "toggle" -> toggle(player);
@@ -63,8 +76,9 @@ public final class SymmetryCommand implements TabExecutor {
 
     /**
      * //sym set [type]: puts the point at the player's feet, with the given type, else the previous one.
+     * //sym placeaim [type]: the same, on the block the player is looking at.
      */
-    private void set(Player player, String[] args) {
+    private void set(Player player, String[] args, BlockVector3 center) {
         Symmetry previous = sessions.get(player.getUniqueId());
         SymmetryType type = previous != null ? previous.type() : sessions.config().defaultType();
         if (args.length >= 2) {
@@ -79,7 +93,7 @@ public final class SymmetryCommand implements TabExecutor {
         if (!combinable(player, type, second)) {
             return;
         }
-        Symmetry symmetry = new Symmetry(world, feet(player), type, previous != null ? previous.range() : 0, true, second);
+        Symmetry symmetry = new Symmetry(world, center, type, previous != null ? previous.range() : 0, true, second);
         sessions.set(player.getUniqueId(), symmetry);
         Messages.send(player, "symmetry.set", "type", type.id(), "position", position(symmetry.center()),
                 "copies", symmetry.copyCount(), "range", symmetry.range(sessions.config().maxRange()));
@@ -87,9 +101,9 @@ public final class SymmetryCommand implements TabExecutor {
 
     /**
      * //sym2 set [type]: puts the second point at the player's feet, with the given type, else the previous one.
-     * It copies the blocks and the copies of the first symmetry.
+     * It copies the blocks and the copies of the first symmetry. //sym2 placeaim [type]: on the aimed block.
      */
-    private void setSecond(Player player, String[] args) {
+    private void setSecond(Player player, String[] args, BlockVector3 center) {
         Symmetry symmetry = existing(player);
         if (symmetry == null) {
             return;
@@ -105,7 +119,7 @@ public final class SymmetryCommand implements TabExecutor {
                 return;
             }
         }
-        Symmetry.Second second = new Symmetry.Second(feet(player), type);
+        Symmetry.Second second = new Symmetry.Second(center, type);
         if (!combinable(player, symmetry.type(), second)) {
             return;
         }
@@ -285,6 +299,20 @@ public final class SymmetryCommand implements TabExecutor {
         return BlockVector3.at(feet.getBlockX(), feet.getBlockY(), feet.getBlockZ());
     }
 
+    /**
+     * @return the block the player is looking at, within symmetry.aim-range; else null after telling them
+     */
+    @Nullable
+    private BlockVector3 aimed(Player player) {
+        int range = sessions.config().aimRange();
+        Block block = player.getTargetBlockExact(range);
+        if (block == null) {
+            Messages.send(player, "symmetry.no-aimed-block", "range", range);
+            return null;
+        }
+        return BlockVector3.at(block.getX(), block.getY(), block.getZ());
+    }
+
     private static String position(BlockVector3 center) {
         return center.x() + ", " + center.y() + ", " + center.z();
     }
@@ -297,13 +325,13 @@ public final class SymmetryCommand implements TabExecutor {
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         if (args.length == 1) {
-            Stream<String> subs = second ? Stream.of("set", "type", "off", "info")
-                    : Stream.of("set", "type", "range", "toggle", "off", "info");
+            Stream<String> subs = second ? Stream.of("set", "placeaim", "type", "off", "info")
+                    : Stream.of("set", "placeaim", "type", "range", "toggle", "off", "info");
             return subs.filter(s -> s.startsWith(last)).toList();
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
-                case "set", "s", "type", "t" -> ids().filter(id -> id.startsWith(last)).toList();
+                case "set", "s", "placeaim", "pa", "type", "t" -> ids().filter(id -> id.startsWith(last)).toList();
                 case "range", "r" -> second ? List.of()
                         : Stream.of("16", "32", "64", "max").filter(s -> s.startsWith(last)).toList();
                 default -> List.of();

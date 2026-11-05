@@ -14,9 +14,10 @@ import java.util.function.Consumer;
  * @param vanilla     copies the blocks placed and broken by hand
  * @param marker      shows the symmetry point with particles
  * @param confirmSeconds time to //confirm an edit going beyond the player's range
+ * @param aimRange    farthest block //sym placeaim can put the point on
  */
 public record SymmetryConfig(int maxRange, SymmetryType defaultType, boolean worldEdit, boolean vanilla, boolean marker,
-                             int markerTicks, int confirmSeconds) {
+                             int markerTicks, int confirmSeconds, int aimRange) {
 
     /**
      * @param warn receives a message for each invalid value, replaced by its default
@@ -44,6 +45,7 @@ public record SymmetryConfig(int maxRange, SymmetryType defaultType, boolean wor
                 section.getBoolean("vanilla", true),
                 section.getBoolean("marker.enabled", true),
                 Math.max(1, section.getInt("marker.refresh-ticks", 10)),
-                Math.max(1, section.getInt("confirm-seconds", 20)));
+                Math.max(1, section.getInt("confirm-seconds", 20)),
+                Math.max(1, section.getInt("aim-range", 1024)));
     }
 }

@@ -92,9 +92,16 @@ symmetry:
   confirmed: "{info}Copying up to {max} blocks from the symmetry point. Your range is now {max}."
   not-confirmed: "{warning}Not confirmed: copies are kept within your range ({range})."
   none: "{error}You have no symmetry (//sym set [type])."
+  no-aimed-block: "{error}You are not looking at a block within {range} blocks."
   info: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range})."
   info-paused: "{info}Symmetry {type} at {position} in {world} ({copies} blocks per block, range {range}), paused."
   info-second: "{info}Second symmetry {type} at {position} ({copies} blocks per block in all)."
+
+speed:
+  fly: "{info}Flight speed set to {speed}."
+  walk: "{info}Walking speed set to {speed}."
+  invalid-number: "{error}Invalid number: {value}"
+  range: "{error}The speed must be between 0 and {max} (1 is the usual speed)."
 
 gravity:
   on: "{info}Gravity enabled: the sand, gravel, concrete powder and anvils you set with FAWE fall (//gravity to disable)."
@@ -230,6 +237,10 @@ menu:
 aim:
   player-only: "{error}#faim and #faimtype can only be used by a player."
   no-block: "{error}#faim: you are not looking at a block within {range} blocks."
+
+hotbar:
+  player-only: "{error}#fhotbar can only be used by a player."
+  no-block: "{error}#fhotbar: there is no block in your hotbar."
 
 current-mask:
   player-only: "{error}{mask} can only be used by a player."

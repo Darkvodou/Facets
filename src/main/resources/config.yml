@@ -60,6 +60,8 @@ symmetry:
   # Time to //confirm a FAWE edit going beyond the player's own range (//sym range), in seconds.
   # Confirmed, it is copied up to max-range; else only within the player's range.
   confirm-seconds: 20
+  # Farthest block //sym placeaim and //sym2 placeaim can put the symmetry point on (blocks)
+  aim-range: 1024
   # Copies the edits of FAWE (commands, brushes, pastes...). They are undone with //undo.
   worldedit: true
   # Copies the blocks placed and broken by hand, and the text written on signs
@@ -88,3 +90,4 @@ commands:
     - rpos2
     - replacecolor
     - typereplace
+    - speed

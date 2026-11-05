@@ -2,7 +2,7 @@ name: Facets
 version: '${version}'
 main: fr.darkvodou.facets.Facets
 api-version: '1.21'
-description: Adds extra masks, a loft selection, a fuzzy fill, a symmetry tool, a gravity toggle, a color replace and a type replace to FastAsyncWorldEdit.
+description: Adds extra masks, a loft selection, a speed command, a fuzzy fill, a symmetry tool, a gravity toggle, a color replace and a type replace to FastAsyncWorldEdit.
 author: darkvodou
 depend: [FastAsyncWorldEdit]
 
@@ -33,12 +33,12 @@ commands:
     permission: facets.fuzzyfill
   /sym:
     description: Copies the blocks placed by hand or with FAWE around a symmetry point.
-    usage: "//sym [set [type] | type <type> | range <blocks | max> | toggle | off | info]"
+    usage: "//sym [set [type] | placeaim [type] | type <type> | range <blocks | max> | toggle | off | info]"
     aliases: [/symmetry]
     permission: facets.symmetry
   /sym2:
     description: Adds a second symmetry point, which copies the first symmetry and its copies.
-    usage: "//sym2 [set [type] | type <type> | off | info]"
+    usage: "//sym2 [set [type] | placeaim [type] | type <type> | off | info]"
     aliases: [/symmetry2]
     permission: facets.symmetry
   /gravity:
@@ -55,6 +55,10 @@ commands:
     usage: "//typereplace [type] [new type]"
     aliases: [/tr]
     permission: facets.typereplace
+  speed:
+    description: Sets your flight speed when flying, else your walking speed (1 is the usual speed, 10 the fastest).
+    usage: "/speed [speed]"
+    permission: facets.speed
   variant:
     description: Opens the variants of the block in hand (every stairs for oak_stairs).
     usage: "/variant"
@@ -88,6 +92,9 @@ permissions:
     default: op
   facets.typereplace:
     description: Use //typereplace.
+    default: op
+  facets.speed:
+    description: Use /speed.
     default: op
   facets.menu:
     description: Open the Facets menu with the menu item (a nether star by default).
