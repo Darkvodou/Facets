@@ -18,7 +18,7 @@ Named after WorldEdit's `//fill` and `//fillr`:
 
 The direction is `down` by default and takes the directions of `//fill`: `up`, `down`, `north`, `south`, `east`, `west`, `me`, `forward`, `back`, `left`, `right`.
 
-### Symmetry — `//sym`
+### Symmetry — `//sym`, `//sym2`
 Copies around a point, in real time, the blocks you place and break by hand, the text written on signs, and every FAWE edit (commands, brushes, pastes...).
 Copies made through FAWE are undone with `//undo`. The mask of `//replace`, `//replacenear` and `//removenear` applies to the copies too: only the matching blocks on the symmetric side are changed.
 Block orientation and shape follow the symmetry: stairs (inner/outer shapes), doors, double chests, rails, slabs, fences, signs and more.
@@ -71,7 +71,7 @@ Without types, a chest opens to choose the type to replace, then the new one. It
 Undone with `//undo`.
 
 ### Menu
-Right click with a nether star to open the Facets menu: symmetry, selections and global masks (with favorites) in a few clicks.
+Right click with a nether star to open the Facets menu: symmetry (with the second point and its type), selections and global masks (with favorites) in a few clicks.
 
 ### Variants and families — `/variant`, `/family`
 With a block in hand, `/variant` shows its variants: with `oak_stairs`, every stairs.
@@ -101,7 +101,7 @@ The block is taken when the command is run, and must be within `aim.max-range` o
 |---|---|
 | `facets.loft` | Loft selection, `//loft`, `//rpos1`, `//rpos2` |
 | `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillr`, `//fuzzyfills` |
-| `facets.symmetry` | `//sym` |
+| `facets.symmetry` | `//sym`, `//sym2` |
 | `facets.gravity` | `//gravity` |
 | `facets.replacecolor` | `//replacecolor` |
 | `facets.typereplace` | `//typereplace` |
