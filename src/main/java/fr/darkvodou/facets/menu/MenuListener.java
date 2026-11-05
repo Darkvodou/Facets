@@ -15,6 +15,7 @@ import com.sk89q.worldedit.regions.selector.ExtendingCuboidRegionSelector;
 import com.sk89q.worldedit.regions.selector.Polygonal2DRegionSelector;
 import com.sk89q.worldedit.regions.selector.SphereRegionSelector;
 import fr.darkvodou.facets.Messages;
+import fr.darkvodou.facets.compat.Menus;
 import fr.darkvodou.facets.loft.LoftRegionSelector;
 import fr.darkvodou.facets.loft.LoftSessions;
 import fr.darkvodou.facets.loft.LoftShape;
@@ -135,7 +136,7 @@ public final class MenuListener implements Listener {
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof Menu menu)) {
+        if (!(Menus.holder(event) instanceof Menu menu)) {
             return;
         }
         event.setCancelled(true);
@@ -143,7 +144,7 @@ public final class MenuListener implements Listener {
             menu.click(event.getSlot(), event.getClick());
             // Commands take effect at once or on FAWE's thread: show the result a moment later
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (player.getOpenInventory().getTopInventory().getHolder() == menu) {
+                if (Menus.openHolder(player) == menu) {
                     render(menu, player);
                 }
             }, 3);
@@ -152,7 +153,7 @@ public final class MenuListener implements Listener {
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof Menu) {
+        if (Menus.holder(event) instanceof Menu) {
             event.setCancelled(true);
         }
     }

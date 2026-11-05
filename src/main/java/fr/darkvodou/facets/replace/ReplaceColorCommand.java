@@ -1,6 +1,7 @@
 package fr.darkvodou.facets.replace;
 
 import fr.darkvodou.facets.Messages;
+import fr.darkvodou.facets.compat.Menus;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -102,7 +103,7 @@ public final class ReplaceColorCommand implements TabExecutor, Listener {
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof View view)) {
+        if (!(Menus.holder(event) instanceof View view)) {
             return;
         }
         event.setCancelled(true);
@@ -127,7 +128,7 @@ public final class ReplaceColorCommand implements TabExecutor, Listener {
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof View) {
+        if (Menus.holder(event) instanceof View) {
             event.setCancelled(true);
         }
     }

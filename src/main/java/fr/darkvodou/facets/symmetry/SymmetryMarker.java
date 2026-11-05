@@ -1,7 +1,7 @@
 package fr.darkvodou.facets.symmetry;
 
 import com.sk89q.worldedit.math.BlockVector3;
-import fr.darkvodou.facets.Trails;
+import fr.darkvodou.facets.compat.Particles;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -19,7 +19,7 @@ import java.util.Map;
  * The shape follows the mirrors: a square for each plane, a star for the diagonals, a cube for megastar.
  * The colors of the planes are those of the axes in Minecraft (x red, y green, z blue). A paused symmetry is gray.
  * <p>
- * The particles are {@link Trails}, which last until the next refresh: dust fades sooner and blinks.
+ * The particles are trails ({@link Particles#still}), which last until the next refresh: dust fades sooner and blinks.
  * Servers without them (before 1.21.4) use dust.
  */
 public final class SymmetryMarker implements Runnable {
@@ -83,11 +83,11 @@ public final class SymmetryMarker implements Runnable {
         Particle.DustOptions dust = new Particle.DustOptions(color, DUST_SIZE);
         for (Vector offset : look.points()) {
             Location location = center.clone().add(offset);
-            if (Trails.SUPPORTED) {
-                player.spawnParticle(Particle.TRAIL, location, 1, 0, 0, 0, 0,
-                        Trails.still(location, color, sessions.config().markerTicks()), true);
+            if (Particles.TRAILS) {
+                Particles.show(player, Particle.TRAIL, location,
+                        Particles.still(location, color, sessions.config().markerTicks()));
             } else {
-                player.spawnParticle(Particle.DUST, location, 1, 0, 0, 0, 0, dust, true);
+                Particles.show(player, Particle.DUST, location, dust);
             }
         }
     }
