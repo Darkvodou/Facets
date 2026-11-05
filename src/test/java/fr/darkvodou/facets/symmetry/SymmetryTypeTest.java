@@ -28,6 +28,8 @@ class SymmetryTypeTest {
         assertEquals(2, SymmetryType.PLANX.copies());
         assertEquals(2, SymmetryType.PLANY.copies());
         assertEquals(2, SymmetryType.PLANZ.copies());
+        assertEquals(2, SymmetryType.PLANXZ.copies());
+        assertEquals(2, SymmetryType.PLANZX.copies());
         assertEquals(4, SymmetryType.CROSS2D.copies());
         assertEquals(8, SymmetryType.CROSS3D.copies());
         assertEquals(8, SymmetryType.STAR2D.copies());
@@ -48,6 +50,25 @@ class SymmetryTypeTest {
         assertTrue(star.contains(BlockVector3.at(2, 1, 3)));
         assertTrue(star.contains(BlockVector3.at(-2, 1, -3)));
         assertTrue(star.stream().allMatch(p -> p.y() == 1));
+    }
+
+    @Test
+    void diagonalPlanesAreThoseOfTheStar() {
+        assertEquals(Set.of(BlockVector3.at(2, 1, 3)), copies(SymmetryType.PLANXZ, 3, 1, 2));
+        assertEquals(Set.of(BlockVector3.at(-2, 1, -3)), copies(SymmetryType.PLANZX, 3, 1, 2));
+        // On its plane, a block is its own copy
+        assertTrue(copies(SymmetryType.PLANXZ, 4, 1, 4).isEmpty());
+        assertTrue(copies(SymmetryType.PLANZX, 4, 1, -4).isEmpty());
+        Set<Transform> star = Set.copyOf(SymmetryType.STAR2D.transforms());
+        assertTrue(star.containsAll(SymmetryType.PLANXZ.transforms()));
+        assertTrue(star.containsAll(SymmetryType.PLANZX.transforms()));
+    }
+
+    @Test
+    void menuHoldsNineTypes() {
+        assertEquals(9, SymmetryType.inMenu().size());
+        assertTrue(!SymmetryType.inMenu().contains(SymmetryType.PLANXZ));
+        assertTrue(!SymmetryType.inMenu().contains(SymmetryType.PLANZX));
     }
 
     @Test

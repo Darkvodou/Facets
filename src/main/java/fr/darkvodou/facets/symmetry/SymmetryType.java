@@ -3,6 +3,7 @@ package fr.darkvodou.facets.symmetry;
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,6 +21,10 @@ public enum SymmetryType {
     PLANX("planx", Transform.MIRROR_X),
     PLANY("plany", Transform.MIRROR_Y),
     PLANZ("planz", Transform.MIRROR_Z),
+    /** Mirror through the vertical diagonal plane x = z, one of the diagonals of STAR2D (2 blocks). Command only */
+    PLANXZ("planxz", false, Transform.SWAP_XZ),
+    /** Mirror through the other vertical diagonal plane, x = -z (2 blocks). Command only */
+    PLANZX("planzx", false, Transform.SWAP_XZ_REVERSED),
     /** PLANX and PLANZ together (4 blocks) */
     CROSS2D("cross2d", Transform.MIRROR_X, Transform.MIRROR_Z),
     /** PLANX, PLANY and PLANZ together (8 blocks) */
@@ -33,11 +38,18 @@ public enum SymmetryType {
             Transform.SWAP_XY);
 
     private final String id;
+    // Shown in the menu, else only given by command
+    private final boolean menu;
     // Without the identity
     private final List<Transform> transforms;
 
     SymmetryType(String id, Transform... generators) {
+        this(id, true, generators);
+    }
+
+    SymmetryType(String id, boolean menu, Transform... generators) {
         this.id = id;
+        this.menu = menu;
         this.transforms = generate(generators);
     }
 
@@ -57,6 +69,13 @@ public enum SymmetryType {
      */
     public int copies() {
         return transforms.size() + 1;
+    }
+
+    /**
+     * @return the types shown in the menu, the others being given by command only
+     */
+    public static List<SymmetryType> inMenu() {
+        return Arrays.stream(values()).filter(type -> type.menu).toList();
     }
 
     @Nullable

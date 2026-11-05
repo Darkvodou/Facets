@@ -19,6 +19,8 @@ public final class Transform {
     public static final Transform HALF_TURN_Y = new Transform(new int[]{0, 1, 2}, new int[]{-1, 1, -1});
     /** Mirror through the diagonal plane x = z (45° from the x and z planes) */
     public static final Transform SWAP_XZ = new Transform(new int[]{2, 1, 0}, new int[]{1, 1, 1});
+    /** Mirror through the other diagonal plane, x = -z */
+    public static final Transform SWAP_XZ_REVERSED = new Transform(new int[]{2, 1, 0}, new int[]{-1, 1, -1});
     /** Mirror through the diagonal plane x = y */
     public static final Transform SWAP_XY = new Transform(new int[]{1, 0, 2}, new int[]{1, 1, 1});
 

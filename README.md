@@ -47,6 +47,7 @@ The range and `//sym toggle` apply to both. Each symmetry copies what is within 
 |---|---|---|
 | `simple2d` | Half turn around the vertical axis | 2 |
 | `planx` / `plany` / `planz` | Mirror across one plane | 2 |
+| `planxz` / `planzx` | Mirror across one vertical diagonal plane (x = z, x = -z), those of `star2d`. Command only | 2 |
 | `cross2d` | `planx` + `planz` | 4 |
 | `cross3d` | All three planes | 8 |
 | `star2d` | `cross2d` + 45° diagonals | 8 |

@@ -41,6 +41,8 @@ public final class SymmetryMarker implements Runnable {
         look(SymmetryType.PLANX, 0xff3030, square('x'));
         look(SymmetryType.PLANY, 0x30ff30, square('y'));
         look(SymmetryType.PLANZ, 0x3080ff, square('z'));
+        look(SymmetryType.PLANXZ, 0xff69b4, diagonal(1));
+        look(SymmetryType.PLANZX, 0x40e0d0, diagonal(-1));
         look(SymmetryType.CROSS2D, 0xff40ff, square('x'), square('z'));
         look(SymmetryType.CROSS3D, 0xffffff, square('x'), square('y'), square('z'));
         look(SymmetryType.STAR2D, 0xffe000, star());
@@ -114,6 +116,19 @@ public final class SymmetryMarker implements Runnable {
                     default -> new Vector(side[0], side[1], 0);
                 });
             }
+        }
+        return points;
+    }
+
+    /**
+     * The outline of a square in the vertical diagonal plane x = z (sign 1) or x = -z (sign -1).
+     */
+    private static List<Vector> diagonal(int sign) {
+        Vector across = new Vector(1, 0, sign).normalize();
+        List<Vector> points = new ArrayList<>();
+        for (Vector point : square('z')) {
+            // square('z') lies in the plane of x and y: x goes along the diagonal
+            points.add(across.clone().multiply(point.getX()).setY(point.getY()));
         }
         return points;
     }

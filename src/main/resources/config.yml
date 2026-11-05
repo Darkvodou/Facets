@@ -55,7 +55,7 @@ symmetry:
   # Largest distance from the symmetry point (blocks, along each axis) at which blocks are copied.
   # Players can lower it for themselves with //sym range.
   max-range: 128
-  # Type used by //sym set when none is given: simple2d, planx, plany, planz, cross2d, cross3d, star2d, star3d, megastar
+  # Type used by //sym set when none is given: simple2d, planx, plany, planz, planxz, planzx, cross2d, cross3d, star2d, star3d, megastar
   default-type: cross2d
   # Time to //confirm a FAWE edit going beyond the player's own range (//sym range), in seconds.
   # Confirmed, it is copied up to max-range; else only within the player's range.

@@ -285,9 +285,10 @@ public final class MenuListener implements Listener {
             }
         }
 
-        SymmetryType[] types = SymmetryType.values();
-        for (int i = 0; i < types.length; i++) {
-            SymmetryType type = types[i];
+        // The diagonal planes are given by command only: the rows hold nine types
+        List<SymmetryType> types = SymmetryType.inMenu();
+        for (int i = 0; i < types.size(); i++) {
+            SymmetryType type = types.get(i);
             boolean selected = symmetry != null && symmetry.type() == type;
             menu.set(27 + i, item(TYPE_ICONS[i], Messages.plain("menu.symmetry.type", "type", type.id()),
                     Messages.lines("menu.symmetry.type-" + type.id(), "copies", type.copies()), selected),
@@ -295,8 +296,8 @@ public final class MenuListener implements Listener {
         }
 
         // The types of the second symmetry: the first click places it at the player's feet
-        for (int i = 0; i < types.length; i++) {
-            SymmetryType type = types[i];
+        for (int i = 0; i < types.size(); i++) {
+            SymmetryType type = types.get(i);
             List<Component> lore = symmetry == null ? Messages.lines("menu.symmetry.second-type-first")
                     : !Symmetry.combinable(symmetry.type(), type)
                     ? Messages.lines("menu.symmetry.second-type-locked", "first", symmetry.type().id())
