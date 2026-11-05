@@ -49,6 +49,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * and two versions of the same chunk applied at once lose blocks. So the copies are kept by chunk, and written
  * chunk after chunk once the queue has placed the blocks of the edit.
  * <p>
+ * When the command filters the blocks it changes (the mask of //replace), a copy is only placed where the block
+ * matches that mask too, like the edit would do at that position.
+ * <p>
  * A position is written only once per edit: FAWE's history keeps each write, and the undo of a position written
  * twice can leave its first block (a selection across the symmetry). The blocks of the edit win over the copies
  * landing on them, and a copy written is not written over.
@@ -88,6 +91,9 @@ final class SymmetryExtent extends AbstractDelegateExtent {
     @Nullable
     private Region region;
     private boolean fills;
+    // The blocks the region operation changes (//replace), the copies following it too
+    @Nullable
+    private Mask mask;
     // Blocks set too far from the point to be copied
     private int outOfRange;
     private final Actor actor;
@@ -129,7 +135,8 @@ final class SymmetryExtent extends AbstractDelegateExtent {
             BlockVector3 target = copy.position();
             if (target.y() < minY || target.y() > maxY || written.contains(target.x(), target.y(), target.z())
                     // The region operation sets this block later
-                    || (fills && region.contains(target))) {
+                    || (fills && region.contains(target))
+                    || (mask != null && !mask.test(target))) {
                 continue;
             }
             pending.put(target.x(), target.y(), target.z(), WorldEditMirror.transform(block, copy.transform()));
@@ -172,16 +179,19 @@ final class SymmetryExtent extends AbstractDelegateExtent {
      * Starts a region operation, until {@link #end()}.
      *
      * @param fills whether it sets every block of the region
+     * @param mask the blocks it changes, or null for every block
      */
-    private synchronized void begin(Region region, boolean fills) {
+    private synchronized void begin(Region region, boolean fills, @Nullable Mask mask) {
         checkRegion(region);
         this.region = region;
         this.fills = fills;
+        this.mask = mask;
     }
 
     private synchronized void end() {
         region = null;
         fills = false;
+        mask = null;
     }
 
     // Called when the edit ends, before the queue below is flushed
@@ -274,7 +284,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public <B extends BlockStateHolder<B>> int setBlocks(Region region, B block) throws MaxChangedBlocksException {
-        begin(region, true);
+        begin(region, true, null);
         try {
             int count = 0;
             for (BlockVector3 position : region) {
@@ -290,7 +300,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public int setBlocks(Region region, Pattern pattern) throws MaxChangedBlocksException {
-        begin(region, true);
+        begin(region, true, null);
         try {
             return applyPattern(region, pattern);
         } finally {
@@ -303,7 +313,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
         if (!(positions instanceof Region region)) {
             return applyPattern(positions, pattern);
         }
-        begin(region, true);
+        begin(region, true, null);
         try {
             return applyPattern(positions, pattern);
         } finally {
@@ -335,7 +345,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public int replaceBlocks(Region region, Mask mask, Pattern pattern) throws MaxChangedBlocksException {
-        begin(region, false);
+        begin(region, false, mask);
         try {
             RegionVisitor visitor = new RegionVisitor(region, new RegionMaskingFilter(mask, new BlockReplace(this, pattern)), this);
             Operations.completeLegacy(visitor);
@@ -347,7 +357,7 @@ final class SymmetryExtent extends AbstractDelegateExtent {
 
     @Override
     public <T extends Filter> T apply(Region region, T filter, boolean full) {
-        begin(region, false);
+        begin(region, false, null);
         try {
             ExtentFilterBlock block = new ExtentFilterBlock(this);
             for (BlockVector3 position : region) {

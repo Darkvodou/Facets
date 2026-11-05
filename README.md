@@ -20,7 +20,7 @@ The direction is `down` by default and takes the directions of `//fill`: `up`, `
 
 ### Symmetry — `//sym`
 Copies around a point, in real time, the blocks you place and break by hand, the text written on signs, and every FAWE edit (commands, brushes, pastes...).
-Copies made through FAWE are undone with `//undo`.
+Copies made through FAWE are undone with `//undo`. The mask of `//replace`, `//replacenear` and `//removenear` applies to the copies too: only the matching blocks on the symmetric side are changed.
 Block orientation and shape follow the symmetry: stairs (inner/outer shapes), doors, double chests, rails, slabs, fences, signs and more.
 
 | Command | Effect |
