@@ -66,15 +66,19 @@ public final class SymmetryMarker implements Runnable {
             if (symmetry == null || !symmetry.world().equals(player.getWorld().getName())) {
                 continue;
             }
-            show(player, symmetry.center(), symmetry.type(), symmetry.enabled());
+            show(player, symmetry.first(), symmetry.enabled());
             if (symmetry.second() != null) {
-                show(player, symmetry.second().center(), symmetry.second().type(), symmetry.enabled());
+                show(player, symmetry.second(), symmetry.enabled() && symmetry.second().enabled());
             }
         }
     }
 
-    private void show(Player player, BlockVector3 point, SymmetryType type, boolean enabled) {
-        Location center = new Location(player.getWorld(), point.x() + 0.5, point.y() + 0.5, point.z() + 0.5);
+    private void show(Player player, Symmetry.Second symmetry, boolean enabled) {
+        BlockVector3 point = symmetry.center();
+        SymmetryType type = symmetry.type();
+        // An even point is at the corner of its block, between blocks
+        double half = symmetry.even() ? 1 : 0.5;
+        Location center = new Location(player.getWorld(), point.x() + half, point.y() + half, point.z() + half);
         if (center.distanceSquared(player.getLocation()) > VIEW_DISTANCE * VIEW_DISTANCE) {
             return;
         }

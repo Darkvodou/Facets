@@ -75,4 +75,48 @@ class SymmetryTest {
         int count = copies(symmetry, 5, 7, 3, 1000).size();
         assertTrue(count > SymmetryType.MEGASTAR.copies() && count < 768, String.valueOf(count));
     }
+    @Test
+    void evenPointMirrorsBlocksInPairs() {
+        // Point between x = 0 and x = 1
+        Symmetry symmetry = new Symmetry("world", BlockVector3.ZERO, true, SymmetryType.PLANX, 0, true, null);
+        assertEquals(Map.of(BlockVector3.at(1, 5, 2), Transform.MIRROR_X), copies(symmetry, 0, 5, 2, 100));
+        assertEquals(Map.of(BlockVector3.at(-4, 5, 2), Transform.MIRROR_X), copies(symmetry, 5, 5, 2, 100));
+    }
+
+    @Test
+    void evenPointCopiesWholeBlocksForEveryType() {
+        for (SymmetryType type : SymmetryType.values()) {
+            Symmetry symmetry = new Symmetry("world", BlockVector3.at(10, 64, -3), true, type, 0, true, null);
+            // Every block lands on a block of its own: no copy on the block itself
+            assertEquals(type.copies() - 1, copies(symmetry, 13, 70, 1, 100).size(), type.id());
+        }
+    }
+
+    @Test
+    void evenRangeHasTheBlocksOnEachSide() {
+        Symmetry symmetry = new Symmetry("world", BlockVector3.ZERO, true, SymmetryType.PLANX, 2, true, null);
+        assertTrue(symmetry.inRange(2, 0, 0, 100));
+        assertTrue(symmetry.inRange(-1, 0, 0, 100));
+        assertFalse(symmetry.inRange(3, 0, 0, 100));
+        assertFalse(symmetry.inRange(-2, 0, 0, 100));
+    }
+
+    @Test
+    void swapExchangesTheSymmetries() {
+        Symmetry symmetry = new Symmetry("world", BlockVector3.ZERO, false, SymmetryType.PLANX, 7, true,
+                new Symmetry.Second(BlockVector3.at(0, 0, 10), true, SymmetryType.STAR2D));
+        Symmetry swapped = symmetry.swapped();
+        assertEquals(new Symmetry("world", BlockVector3.at(0, 0, 10), true, SymmetryType.STAR2D, 7, true,
+                new Symmetry.Second(BlockVector3.ZERO, false, SymmetryType.PLANX)), swapped);
+        assertEquals(symmetry, swapped.swapped());
+    }
+    @Test
+    void pausedSecondDoesNotCopy() {
+        Symmetry symmetry = new Symmetry("world", BlockVector3.ZERO, false, SymmetryType.PLANX, 0, true,
+                new Symmetry.Second(BlockVector3.at(0, 0, 10), false, SymmetryType.PLANZ, false));
+        assertEquals(Map.of(BlockVector3.at(-3, 5, 2), Transform.MIRROR_X), copies(symmetry, 3, 5, 2, 100));
+        assertEquals(SymmetryType.PLANX.copies(), symmetry.copyCount());
+        // The pause stays with the second symmetry when swapped
+        assertFalse(symmetry.swapped().second().enabled());
+    }
 }

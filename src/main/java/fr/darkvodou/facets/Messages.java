@@ -47,6 +47,13 @@ public final class Messages {
     }
 
     /**
+     * @return the text of the message, with its color codes, to be put in another one as a placeholder value
+     */
+    public static String raw(String key) {
+        return messages.getString(key, key);
+    }
+
+    /**
      * The message without prefix and without italics, for item names and lore.
      */
     public static Component plain(String key, Object... placeholders) {

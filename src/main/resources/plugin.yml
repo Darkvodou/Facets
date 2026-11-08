@@ -33,12 +33,12 @@ commands:
     permission: facets.fuzzyfill
   /sym:
     description: Copies the blocks placed by hand or with FAWE around a symmetry point.
-    usage: "//sym [set [type] | placeaim [type] | type <type> | range <blocks | max> | toggle | off | info]"
+    usage: "//sym [set [type] [even | odd] | placeaim [type] [even | odd] | type <type> | range <blocks | max> | swap | share [player] | toggle | off | info]"
     aliases: [/symmetry]
     permission: facets.symmetry
   /sym2:
     description: Adds a second symmetry point, which copies the first symmetry and its copies.
-    usage: "//sym2 [set [type] | placeaim [type] | type <type> | off | info]"
+    usage: "//sym2 [set [type] [even | odd] | placeaim [type] [even | odd] | type <type> | swap | toggle | off | info]"
     aliases: [/symmetry2]
     permission: facets.symmetry
   /gravity:

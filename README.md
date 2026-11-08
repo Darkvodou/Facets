@@ -25,10 +25,12 @@ Block orientation and shape follow the symmetry: stairs (inner/outer shapes), do
 
 | Command | Effect |
 |---|---|
-| `//sym set [type]` | Puts the symmetry point at your feet |
-| `//sym placeaim [type]` | Puts the symmetry point on the block you are looking at (up to `symmetry.aim-range`, 1024 blocks by default) |
+| `//sym set [type] [even \| odd]` | Puts the symmetry point at your feet |
+| `//sym placeaim [type] [even \| odd]` | Puts the symmetry point on the block you are looking at (up to `symmetry.aim-range`, 1024 blocks by default) |
 | `//sym type <type>` | Changes the type without moving the point |
 | `//sym range <blocks \| max>` | Range around the point, capped by the configuration |
+| `//sym swap` | Swaps the first and the second symmetry |
+| `//sym share [player]` | Shares your symmetries in the chat, or with one player: a click takes one of them as your first or second symmetry |
 | `//sym toggle` | Pauses or resumes |
 | `//sym off` | Removes the symmetry, and the second one |
 | `//sym info` | Shows the current symmetry |
@@ -37,13 +39,16 @@ A second symmetry, set with `//sym2`, copies the blocks and the copies of the fi
 
 | Command | Effect |
 |---|---|
-| `//sym2 set [type]` | Puts the second symmetry point at your feet |
-| `//sym2 placeaim [type]` | Puts it on the block you are looking at |
+| `//sym2 set [type] [even \| odd]` | Puts the second symmetry point at your feet |
+| `//sym2 placeaim [type] [even \| odd]` | Puts it on the block you are looking at |
 | `//sym2 type <type>` | Changes its type without moving the point |
+| `//sym2 toggle` | Pauses or resumes the second symmetry only, keeping it |
 | `//sym2 off` | Removes the second symmetry, keeping the first |
 | `//sym2 info` | Shows the second symmetry |
 
-The range and `//sym toggle` apply to both. Each symmetry copies what is within the range of its own point. Two symmetries place at most 768 blocks per block (`megastar` + `star3d`): two `megastar` cannot be combined.
+An `even` point is between blocks, so the blocks go in pairs (an `odd` one is on a block, which is its own copy). At your feet, it goes on the nearest block edges; with `placeaim`, on the face you are looking at. Without `even` or `odd`, the previous parity is kept.
+
+The range and `//sym toggle` apply to both; `//sym2 toggle` pauses the second one only. Each symmetry copies what is within the range of its own point. Two symmetries place at most 768 blocks per block (`megastar` + `star3d`): two `megastar` cannot be combined.
 
 | Type | Symmetry | Blocks per block placed |
 |---|---|---|
@@ -73,7 +78,7 @@ Without types, a chest opens to choose the type to replace, then the new one. It
 Undone with `//undo`.
 
 ### Menu
-Right click with a nether star to open the Facets menu: symmetry (with the second point and its type), selections and global masks (with favorites) in a few clicks.
+Right click with a nether star to open the Facets menu: symmetry (with the second point and its type, swap and share), selections and global masks (with favorites) in a few clicks.
 
 ### Speed — `/speed [speed]`
 Sets your flight speed when you are flying, else your walking speed. `1` is the usual speed, `10` the fastest, and decimals work: `/speed 0.5` is half the usual speed. `/speed` alone goes back to `1`.
