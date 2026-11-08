@@ -51,6 +51,10 @@ fuzzyfill:
   # the tolerance + 1 counts as a hole and the fill gets hard to predict.
   max-tolerance: 3
 
+fixcover:
+  # Largest radius accepted by //fixcover <radius> (blocks)
+  max-radius: 64
+
 symmetry:
   # Largest distance from the symmetry point (blocks, along each axis) at which blocks are copied.
   # Players can lower it for themselves with //sym range.

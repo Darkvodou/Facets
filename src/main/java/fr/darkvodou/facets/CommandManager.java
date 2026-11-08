@@ -1,5 +1,6 @@
 package fr.darkvodou.facets;
 
+import fr.darkvodou.facets.cover.FixCoverCommand;
 import fr.darkvodou.facets.fill.FuzzyFillCommand;
 import fr.darkvodou.facets.gravity.Gravity;
 import fr.darkvodou.facets.gravity.GravityCommand;
@@ -43,6 +44,7 @@ final class CommandManager {
         register(new SymmetryCommand(symmetries, false), "/sym");
         register(new SymmetryCommand(symmetries, true), "/sym2");
         register(new GravityCommand(gravity), "/gravity");
+        register(new FixCoverCommand(plugin), "/fixcover");
         register(new SpeedCommand(), "speed");
         ReplaceColorCommand replaceColor = new ReplaceColorCommand(plugin);
         plugin.listen(replaceColor);

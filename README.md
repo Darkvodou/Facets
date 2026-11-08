@@ -66,6 +66,10 @@ Turns the gravity on or off for your FAWE edits: the sand, gravel, concrete powd
 Only the blocks you set fall: removing the blocks under existing sand does not make it fall. With a symmetry, the copies fall too. The gravity stays on after a restart (saved in `gravity.yml`).
 Undone with `//undo`.
 
+### Fix cover — `//fixcover [radius]`
+Fixes the glow lichen, sculk veins, resin clumps and vines of the selection, or of the sphere around you with a radius: each one covers every block next to it that can hold it, and loses its faces with nothing behind. One with no face left is removed (water stays when it was waterlogged). A hanging vine keeps the faces of the vine above it.
+Follows the global mask (`//gmask`): only the plants it lets through are changed. Undone with `//undo`.
+
 ### Replace color — `//replacecolor [color] [new color]`
 Changes the color of the blocks in the selection and keeps their state: with `red` and `lime`, a `red_bed`, a `red_shulker_box` and red stairs become lime ones, facing the same way. Shulker boxes keep their content and banners their patterns.
 Without colors, a chest opens to choose the color to replace, then the new one. Blocks with no version in the new color are left as they are.
@@ -121,6 +125,7 @@ The block is taken when the command is run, and must be within `aim.max-range` o
 | `facets.fuzzyfill` | `//fuzzyfill`, `//fuzzyfillr`, `//fuzzyfills` |
 | `facets.symmetry` | `//sym`, `//sym2` |
 | `facets.gravity` | `//gravity` |
+| `facets.fixcover` | `//fixcover` |
 | `facets.speed` | `/speed` |
 | `facets.replacecolor` | `//replacecolor` |
 | `facets.typereplace` | `//typereplace` |

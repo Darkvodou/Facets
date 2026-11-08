@@ -120,6 +120,14 @@ gravity:
   on: "{info}Gravity enabled: the sand, gravel, concrete powder and anvils you set with FAWE fall (//gravity to disable)."
   off: "{info}Gravity disabled."
 
+fixcover:
+  no-selection: "{error}Make a selection first, or give a radius."
+  invalid-number: "{error}Invalid number: {value}"
+  radius-range: "{error}The radius must be between 1 and {max}."
+  done: "{info}Operation completed ({count})."
+  none: "{warning}Nothing to fix."
+  failed: "{error}An error occurred: {message}"
+
 replacecolor:
   no-selection: "{error}Make a selection first."
   unknown-color: "{error}Unknown color: {color}. Colors: {colors}"
