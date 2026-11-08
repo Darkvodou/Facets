@@ -2,7 +2,7 @@ name: Facets
 version: '${version}'
 main: fr.darkvodou.facets.Facets
 api-version: '1.21'
-description: Adds extra masks, a loft selection, a speed command, a fuzzy fill, a symmetry tool, a gravity toggle, a cover fix, a color replace and a type replace to FastAsyncWorldEdit.
+description: Adds extra masks, a loft selection, a speed command, a fuzzy fill, a symmetry tool, a gravity toggle, a cover fix, a magnet deform, a color replace and a type replace to FastAsyncWorldEdit.
 author: darkvodou
 depend: [FastAsyncWorldEdit]
 
@@ -49,6 +49,15 @@ commands:
     description: Makes the glow lichen, sculk veins, resin clumps and vines cover the blocks next to them (follows the gmask).
     usage: "//fixcover [radius]"
     permission: facets.fixcover
+  /fdeform:
+    description: Deforms the selection. magnet pulls it toward you, the closest blocks the most (force 1 to 100, 100 brings the first solid block 90% of the way, -m only pulls the blocks matching the mask, like //move -m, -t lets the blocks go out of the selection).
+    usage: "//fdeform magnet [force] [-m <mask>] [-t]"
+    permission: facets.fdeform
+  /fbrush:
+    description: "Binds a FAWE magnet brush: left click chooses the zone, right click pulls it toward the point clicked (/size, /range, /mask, /tracemask work on it)."
+    usage: "//fbrush magnet [radius] [force] [-m <mask>] [-t]"
+    aliases: [/fbr]
+    permission: facets.fdeform
   /replacecolor:
     description: Changes the color of the blocks in the selection, keeping their state.
     usage: "//replacecolor [color] [new color]"
@@ -93,6 +102,9 @@ permissions:
     default: op
   facets.fixcover:
     description: Use //fixcover.
+    default: op
+  facets.fdeform:
+    description: Use //fdeform and //fbrush.
     default: op
   facets.replacecolor:
     description: Use //replacecolor.

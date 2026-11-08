@@ -128,6 +128,19 @@ fixcover:
   none: "{warning}Nothing to fix."
   failed: "{error}An error occurred: {message}"
 
+fdeform:
+  no-selection: "{error}Make a selection first."
+  invalid-number: "{error}Invalid number: {value}"
+  force-range: "{error}The force must be between 1 and 100."
+  radius-range: "{error}The radius must be at least 1."
+  brush-bound: "{info}Magnet brush bound to the item in hand (radius {radius}, force {force}): left click chooses the zone, right click pulls it toward the point clicked. Unbind it with //none."
+  brush-zone: "{info}Zone chosen around {x}, {y}, {z} (radius {radius}): right click where to pull it."
+  brush-no-zone: "{error}Left click first to choose the zone to pull."
+  invalid-mask: "{error}Invalid mask: {message}"
+  done: "{info}Operation completed ({count})."
+  none: "{warning}Nothing moved: stand closer to the selection, or raise the force."
+  failed: "{error}An error occurred: {message}"
+
 replacecolor:
   no-selection: "{error}Make a selection first."
   unknown-color: "{error}Unknown color: {color}. Colors: {colors}"
