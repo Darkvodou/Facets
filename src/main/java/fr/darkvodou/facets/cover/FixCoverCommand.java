@@ -88,7 +88,9 @@ public final class FixCoverCommand implements TabExecutor {
             try {
                 // Every change is worked out before the first one is made, so they are all read from the same blocks
                 List<Map.Entry<BlockVector3, BlockState>> changes = new ArrayList<>();
-                for (BlockVector3 position : region) {
+                for (BlockVector3 next : region) {
+                    // FAWE's cuboid regions give the same mutable vector for every block: kept, it must be copied
+                    BlockVector3 position = next.toImmutable();
                     if (position.y() < minY || position.y() > maxY) {
                         continue;
                     }
