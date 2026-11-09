@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,6 +30,8 @@ final class CommandPriority implements Listener {
 
     private final JavaPlugin plugin;
     private final List<PluginCommand> commands;
+    // Name and aliases of each command as written in plugin.yml
+    private final Map<PluginCommand, List<String>> labels = new HashMap<>();
     private List<PluginCommand> prioritized = List.of();
     // Commands of other plugins whose label we took, to give it back
     private final Map<String, Command> replaced = new HashMap<>();
@@ -37,6 +40,7 @@ final class CommandPriority implements Listener {
     CommandPriority(JavaPlugin plugin, List<PluginCommand> commands) {
         this.plugin = plugin;
         this.commands = commands;
+        commands.forEach(command -> labels.put(command, declaredLabels(plugin, command)));
     }
 
     /**
@@ -120,14 +124,27 @@ final class CommandPriority implements Listener {
         }
     }
 
+    private List<String> labels(PluginCommand command) {
+        return labels.get(command);
+    }
+
     /**
-     * The name and the aliases of the command, in lower case.
+     * The name and the aliases of the command, in lower case. The aliases come from plugin.yml, as Bukkit removes from
+     * getAliases() the ones another plugin already had when ours registered (//tr).
      */
-    private static List<String> labels(PluginCommand command) {
-        List<String> labels = new ArrayList<>();
+    @SuppressWarnings("deprecation")
+    private static List<String> declaredLabels(JavaPlugin plugin, PluginCommand command) {
+        Set<String> labels = new LinkedHashSet<>();
         labels.add(command.getName().toLowerCase(Locale.ROOT));
+        Map<String, Object> entry = plugin.getDescription().getCommands().get(command.getName());
+        Object declared = entry == null ? null : entry.get("aliases");
+        if (declared instanceof List<?> list) {
+            list.forEach(alias -> labels.add(alias.toString().toLowerCase(Locale.ROOT)));
+        } else if (declared != null) {
+            labels.add(declared.toString().toLowerCase(Locale.ROOT));
+        }
         command.getAliases().forEach(alias -> labels.add(alias.toLowerCase(Locale.ROOT)));
-        return labels;
+        return List.copyOf(labels);
     }
 
     /**
