@@ -23,15 +23,15 @@ import java.util.function.Function;
  * <ul>
  * <li>glow lichen, sculk veins, resin clumps and vines cover every face next to them;</li>
  * <li>pale moss carpets lie on the block below and climb the walls next to them, when they can hold them;</li>
- * <li>ladders, amethyst clusters and buds, shelves, trapdoors and banners hold on one face (only the walls for
- * ladders, shelves and banners): they turn to the only block next to them that holds them, and are removed when
- * several do (or turned to one of them at random) or none does.</li>
+ * <li>ladders, amethyst clusters and buds, shelves, trapdoors, banners, coral fans and buttons hold on one face (only
+ * the walls for ladders, shelves and banners, never the ceiling for coral fans): they turn to the only block next to
+ * them that holds them, and are removed when several do (or turned to one of them at random) or none does.</li>
  * </ul>
  */
 final class Cover {
 
     private enum Kind {
-        MULTIFACE, MOSS_CARPET, LADDER, AMETHYST, SHELF, TRAPDOOR, BANNER, WALL_BANNER, NONE
+        MULTIFACE, MOSS_CARPET, LADDER, AMETHYST, SHELF, TRAPDOOR, BANNER, WALL_BANNER, CORAL_FAN, CORAL_WALL_FAN, BUTTON, NONE
     }
 
     private static final Set<String> MULTIFACES = Set.of(
@@ -107,6 +107,15 @@ final class Cover {
             }
             if (id.endsWith("_trapdoor")) {
                 return Kind.TRAPDOOR;
+            }
+            if (id.endsWith("_button")) {
+                return Kind.BUTTON;
+            }
+            if (id.endsWith("_coral_wall_fan")) {
+                return Kind.CORAL_WALL_FAN;
+            }
+            if (id.endsWith("_coral_fan")) {
+                return Kind.CORAL_FAN;
             }
             if (id.endsWith("_wall_banner")) {
                 return Kind.WALL_BANNER;
@@ -259,7 +268,8 @@ final class Cover {
 
     /**
      * Whether the neighbor on this face holds a block holding on one face: a full face, or a solid block for banners.
-     * Ladders, shelves and banners only hold on the walls, so the floor and the ceiling don't count for them.
+     * Ladders, shelves and banners only hold on the walls, so the floor and the ceiling don't count for them; coral fans
+     * never hang from the ceiling.
      */
     private static boolean touches(Kind kind, BlockVector3 position, Face face,
                                    Function<BlockVector3, BlockState> world) {
@@ -269,6 +279,7 @@ final class Cover {
                 yield face.side() && !isCover(neighbor) && neighbor.getBlockType().getMaterial().isSolid();
             }
             case LADDER, SHELF -> face.side() && holds(position, face, world);
+            case CORAL_FAN, CORAL_WALL_FAN -> face != Face.UP && holds(position, face, world);
             default -> holds(position, face, world);
         };
     }
@@ -292,6 +303,24 @@ final class Cover {
                 BlockType type = BlockTypes.get(color + "_wall_banner");
                 return type == null ? null : with(type.getDefaultState(), "facing", facing);
             }
+            case BUTTON -> {
+                if (face.side()) {
+                    return with(with(state, "face", "wall"), "facing", facing);
+                }
+                return with(state, "face", face == Face.UP ? "ceiling" : "floor");
+            }
+            case CORAL_FAN, CORAL_WALL_FAN -> {
+                // On the floor a coral fan, on a wall a coral wall fan, still waterlogged or not
+                String id = state.getBlockType().id();
+                String coral = id.substring(0, id.length() - (kind == Kind.CORAL_FAN ? "_fan" : "_wall_fan").length());
+                BlockType type = BlockTypes.get(coral + (face == Face.DOWN ? "_fan" : "_wall_fan"));
+                if (type == null) {
+                    return null;
+                }
+                String waterlogged = String.valueOf("true".equals(get(state, "waterlogged")));
+                BlockState placed = with(type.getDefaultState(), "waterlogged", waterlogged);
+                return face == Face.DOWN ? placed : with(placed, "facing", facing);
+            }
             default -> {
                 return with(state, "facing", facing);
             }
@@ -299,7 +328,7 @@ final class Cover {
     }
 
     /**
-     * Ladders, amethyst clusters and buds, shelves, trapdoors and banners, whatever their current placement: turned to
+     * Ladders, amethyst clusters and buds, shelves, trapdoors, banners, coral fans and buttons, whatever their current placement: turned to
      * the face next to them when only one holds them. Removed when several do (a corner), unless random picks one of
      * them, and when none does.
      */

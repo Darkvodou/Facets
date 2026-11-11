@@ -31,9 +31,9 @@ import java.util.logging.Level;
 
 /**
  * //fixcover [radius] [-r]: makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders,
- * amethyst clusters and buds, shelves, trapdoors and banners of the selection (or of the sphere around the player) hold
- * on the blocks next to them (see {@link Cover}). The blocks that could hold on several faces are removed, or with -r
- * turned to one of them at random. The global mask (//gmask) chooses which of them are fixed.
+ * amethyst clusters and buds, shelves, trapdoors, banners, coral fans and buttons of the selection (or of the sphere
+ * around the player) hold on the blocks next to them (see {@link Cover}). The blocks that could hold on several faces
+ * are removed, or with -r turned to one of them at random. The global mask (//gmask) chooses which of them are fixed.
  */
 public final class FixCoverCommand implements TabExecutor {
 

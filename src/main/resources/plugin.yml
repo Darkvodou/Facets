@@ -46,7 +46,7 @@ commands:
     usage: "//gravity"
     permission: facets.gravity
   /fixcover:
-    description: Makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders, amethyst, shelves, trapdoors and banners hold on the blocks next to them (follows the gmask). The blocks that could hold on several faces are removed, -r turns them to one of them at random.
+    description: Makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders, amethyst, shelves, trapdoors, banners, coral fans and buttons hold on the blocks next to them (follows the gmask). The blocks that could hold on several faces are removed, -r turns them to one of them at random.
     usage: "//fixcover [radius] [-r]"
     permission: facets.fixcover
   /fdeform:
