@@ -11,7 +11,9 @@ import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.EllipsoidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.World;
+import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
+import com.sk89q.worldedit.world.block.BlockTypes;
 import fr.darkvodou.facets.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,12 +26,14 @@ import org.bukkit.plugin.Plugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 
 /**
- * //fixcover [radius]: makes the glow lichen, sculk veins, resin clumps and vines of the selection (or of the sphere
- * around the player) cover every block next to them, and removes their faces with nothing behind.
- * The global mask (//gmask) chooses which of them are fixed.
+ * //fixcover [radius] [-r]: makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders,
+ * amethyst clusters and buds, shelves, trapdoors and banners of the selection (or of the sphere around the player) hold
+ * on the blocks next to them (see {@link Cover}). The blocks that could hold on several faces are removed, or with -r
+ * turned to one of them at random. The global mask (//gmask) chooses which of them are fixed.
  */
 public final class FixCoverCommand implements TabExecutor {
 
@@ -45,19 +49,27 @@ public final class FixCoverCommand implements TabExecutor {
             Messages.send(sender, "player-only");
             return true;
         }
-        if (args.length > 1) {
-            Messages.send(player, "usage", "usage", "/" + label + " [radius]");
-            return true;
+        boolean random = false;
+        String radiusArg = null;
+        for (String arg : args) {
+            if (arg.equalsIgnoreCase("-r") || arg.equalsIgnoreCase("-random")) {
+                random = true;
+            } else if (radiusArg == null) {
+                radiusArg = arg;
+            } else {
+                Messages.send(player, "usage", "usage", "/" + label + " [radius] [-r]");
+                return true;
+            }
         }
         com.sk89q.worldedit.entity.Player actor = BukkitAdapter.adapt(player);
         World world = actor.getWorld();
         Region region;
-        if (args.length == 1) {
+        if (radiusArg != null) {
             int radius;
             try {
-                radius = Integer.parseInt(args[0]);
+                radius = Integer.parseInt(radiusArg);
             } catch (NumberFormatException e) {
-                Messages.send(player, "fixcover.invalid-number", "value", args[0]);
+                Messages.send(player, "fixcover.invalid-number", "value", radiusArg);
                 return true;
             }
             // Read on each use, so that /facets reload applies it
@@ -80,6 +92,7 @@ public final class FixCoverCommand implements TabExecutor {
         }
 
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(actor);
+        Random randomizer = random ? new Random() : null;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             // Made by the session, so it holds the global mask: the plants it rejects are left as they are
             EditSession editSession = session.createEditSession(actor, "/fixcover");
@@ -87,7 +100,7 @@ public final class FixCoverCommand implements TabExecutor {
             int maxY = world.getMaxY();
             try {
                 // Every change is worked out before the first one is made, so they are all read from the same blocks
-                List<Map.Entry<BlockVector3, BlockState>> changes = new ArrayList<>();
+                List<Map.Entry<BlockVector3, BaseBlock>> changes = new ArrayList<>();
                 for (BlockVector3 next : region) {
                     // FAWE's cuboid regions give the same mutable vector for every block: kept, it must be copied
                     BlockVector3 position = next.toImmutable();
@@ -98,12 +111,12 @@ public final class FixCoverCommand implements TabExecutor {
                     if (!Cover.isCover(state)) {
                         continue;
                     }
-                    BlockState fixed = Cover.fix(state, position, editSession::getBlock);
+                    BlockState fixed = Cover.fix(state, position, editSession::getBlock, randomizer);
                     if (!fixed.equals(state)) {
-                        changes.add(Map.entry(position, fixed));
+                        changes.add(Map.entry(position, withData(editSession.getFullBlock(position), fixed)));
                     }
                 }
-                for (Map.Entry<BlockVector3, BlockState> change : changes) {
+                for (Map.Entry<BlockVector3, BaseBlock> change : changes) {
                     editSession.setBlock(change.getKey(), change.getValue());
                 }
             } catch (WorldEditException e) {
@@ -121,8 +134,25 @@ public final class FixCoverCommand implements TabExecutor {
         return true;
     }
 
+    /**
+     * @return the fixed block with the data of the block it replaces (banner patterns, shelf items), unless removed
+     */
+    private static BaseBlock withData(BaseBlock block, BlockState fixed) {
+        if (block.getNbtReference() == null || fixed.getBlockType().getMaterial().isAir()
+                || fixed.getBlockType() == BlockTypes.WATER) {
+            return fixed.toBaseBlock();
+        }
+        return fixed.toBaseBlock(block.getNbtReference());
+    }
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        return List.of();
+        String last = args.length == 0 ? "" : args[args.length - 1];
+        for (int i = 0; i < args.length - 1; i++) {
+            if (args[i].equalsIgnoreCase("-r") || args[i].equalsIgnoreCase("-random")) {
+                return List.of();
+            }
+        }
+        return "-r".startsWith(last.toLowerCase()) ? List.of("-r") : List.of();
     }
 }

@@ -46,8 +46,8 @@ commands:
     usage: "//gravity"
     permission: facets.gravity
   /fixcover:
-    description: Makes the glow lichen, sculk veins, resin clumps and vines cover the blocks next to them (follows the gmask).
-    usage: "//fixcover [radius]"
+    description: Makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders, amethyst, shelves, trapdoors and banners hold on the blocks next to them (follows the gmask). The blocks that could hold on several faces are removed, -r turns them to one of them at random.
+    usage: "//fixcover [radius] [-r]"
     permission: facets.fixcover
   /fdeform:
     description: Deforms the selection. magnet pulls it toward you, the closest blocks the most (force 1 to 100, 100 brings the first solid block 90% of the way, -m only pulls the blocks matching the mask, like //move -m, -t lets the blocks go out of the selection).
