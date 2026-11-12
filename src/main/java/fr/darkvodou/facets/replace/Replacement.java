@@ -27,9 +27,12 @@ import org.bukkit.plugin.Plugin;
 import org.enginehub.linbus.tree.LinCompoundTag;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.logging.Level;
 
@@ -90,8 +93,8 @@ final class Replacement {
     /**
      * Renames the blocks of the player's selection, in the background, as one edit undone with //undo.
      *
-     * @param messages     the section of messages.yml with no-selection, done, none and failed
-     * @param placeholders added to the done and none messages
+     * @param messages     the section of messages.yml with no-selection, done, none, missing and failed
+     * @param placeholders added to the done, none and missing messages
      */
     static void apply(Plugin plugin, Player player, String command, String messages, Function<String, List<String>> rename,
                       Object... placeholders) {
@@ -103,6 +106,7 @@ final class Replacement {
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(actor);
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             EditSession editSession = session.createEditSession(actor, command);
+            Set<String> missing = new TreeSet<>();
             try {
                 // The renamed block of each state, or the state itself when it has none
                 Map<BlockState, BlockState> renamed = new HashMap<>();
@@ -111,6 +115,13 @@ final class Replacement {
                     BlockState state = block.toImmutableState();
                     BlockState target = renamed.computeIfAbsent(state, s -> {
                         BlockState other = renamed(s, rename);
+                        if (other == null) {
+                            String id = s.getBlockType().id();
+                            String name = id.substring(id.indexOf(':') + 1);
+                            if (!rename.apply(name).isEmpty()) {
+                                missing.add(name.replace('_', ' '));
+                            }
+                        }
                         return other == null ? s : other;
                     });
                     if (target == state) {
@@ -137,7 +148,17 @@ final class Replacement {
             values[0] = "count";
             values[1] = editSession.getBlockChangeCount();
             System.arraycopy(placeholders, 0, values, 2, placeholders.length);
-            Messages.send(player, messages + (editSession.getBlockChangeCount() > 0 ? ".done" : ".none"), values);
+            int count = editSession.getBlockChangeCount();
+            if (count > 0 || missing.isEmpty()) {
+                Messages.send(player, messages + (count > 0 ? ".done" : ".none"), values);
+            }
+            if (!missing.isEmpty()) {
+                // The blocks to rename that have no block of the new name (granite_wall in quartz) were left
+                Object[] withBlocks = Arrays.copyOf(values, values.length + 2);
+                withBlocks[values.length] = "blocks";
+                withBlocks[values.length + 1] = String.join(", ", missing);
+                Messages.send(player, messages + ".missing", withBlocks);
+            }
         });
     }
 

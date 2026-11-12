@@ -196,7 +196,7 @@ public final class ReplaceTypeCommand implements TabExecutor, Listener {
         }
         Replacement.apply(plugin, player, "/typereplace", MESSAGES,
                 name -> TypeReplace.retype(name, from, to),
-                "type", pretty(from));
+                "type", pretty(from), "new", pretty(to));
     }
 
     private static int pages(int types) {

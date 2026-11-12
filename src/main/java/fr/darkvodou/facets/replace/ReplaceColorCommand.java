@@ -170,6 +170,6 @@ public final class ReplaceColorCommand implements TabExecutor, Listener {
                     String recolored = ColorReplace.recolor(name, from, to);
                     return recolored == null ? List.of() : List.of(recolored);
                 },
-                "color", from.replace('_', ' '));
+                "color", from.replace('_', ' '), "new", to.replace('_', ' '));
     }
 }
