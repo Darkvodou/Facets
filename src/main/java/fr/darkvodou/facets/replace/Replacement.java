@@ -68,11 +68,49 @@ final class Replacement {
         for (Map.Entry<Property<?>, Object> entry : state.getStates().entrySet()) {
             @SuppressWarnings("unchecked")
             Property<Object> property = (Property<Object>) properties.get(entry.getKey().getName());
-            if (property != null && property.getValues().contains(entry.getValue())) {
-                result = result.with(property, entry.getValue());
+            if (property == null) {
+                continue;
+            }
+            Object value = property.getValues().contains(entry.getValue()) ? entry.getValue()
+                    : connection(entry.getValue(), property);
+            if (value != null) {
+                result = result.with(property, value);
             }
         }
+        // A fence turned into a wall: the post shows, like in vanilla, unless the wall runs straight on
+        @SuppressWarnings("unchecked")
+        Property<Object> up = (Property<Object>) properties.get("up");
+        if (up != null && type.id().endsWith("_wall") && !state.getBlockType().getPropertyMap().containsKey("up")) {
+            boolean north = connected(result, properties, "north");
+            boolean south = connected(result, properties, "south");
+            boolean east = connected(result, properties, "east");
+            boolean west = connected(result, properties, "west");
+            boolean straight = north && south && !east && !west || east && west && !north && !south;
+            result = result.with(up, !straight);
+        }
         return result;
+    }
+
+    /**
+     * @return the side of a wall for the side of a fence (true: low, false: none) or the other way (none: false,
+     * low or tall: true), or null if the value has no match in the property
+     */
+    @Nullable
+    private static Object connection(Object value, Property<?> property) {
+        List<?> values = property.getValues();
+        if (value instanceof Boolean connected && values.contains("low") && values.contains("none")) {
+            return connected ? "low" : "none";
+        }
+        if (value instanceof String side && values.contains(Boolean.TRUE)
+                && (side.equals("none") || side.equals("low") || side.equals("tall"))) {
+            return !side.equals("none");
+        }
+        return null;
+    }
+
+    private static boolean connected(BlockState state, Map<String, ? extends Property<?>> properties, String side) {
+        Property<?> property = properties.get(side);
+        return property != null && !"none".equals(String.valueOf(state.getState(property)));
     }
 
     /**

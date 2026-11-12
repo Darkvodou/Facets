@@ -42,12 +42,19 @@ class TypeReplaceTest {
         assertEquals(List.of("diorite_slab"), TypeReplace.retype("oak_slab", "oak_planks", "diorite"));
         assertEquals(List.of("polished_granite_stairs"),
                 TypeReplace.retype("granite_stairs", "granite", "polished_granite"));
-        assertEquals(List.of("deepslate_brick_wall"),
+        assertEquals(List.of("deepslate_brick_wall", "deepslate_brick_fence"),
                 TypeReplace.retype("stone_brick_wall", "stone_bricks", "deepslate_bricks"));
         assertEquals(List.of("quartz_block"), TypeReplace.retype("stone_bricks", "stone_bricks", "quartz_block"));
         assertEquals(List.of("quartz_stairs"), TypeReplace.retype("stone_brick_stairs", "stone_bricks", "quartz_block"));
         assertEquals(List.of("red_wool_stairs"), TypeReplace.retype("white_wool_stairs", "white_wool", "red_wool"));
         assertEquals(List.of(), TypeReplace.retype("oak_log", "oak_planks", "spruce_planks"));
+    }
+
+    @Test
+    void fencesAndWallsTakeTheOtherWhenMissing() {
+        assertEquals(List.of("granite_fence", "granite_wall"), TypeReplace.retype("oak_fence", "oak_planks", "granite"));
+        assertEquals(List.of("oak_wall", "oak_fence"), TypeReplace.retype("granite_wall", "granite", "oak_planks"));
+        assertEquals(List.of("granite_fence_gate"), TypeReplace.retype("oak_fence_gate", "oak_planks", "granite"));
     }
 
     @Test

@@ -106,8 +106,9 @@ final class TypeReplace {
 
     /**
      * @return the names to try for the block, best first: the same block in the new type (oak_stairs: spruce_stairs),
-     * waxed first for a waxed block; empty if it is not of that type. The blocks with no version in the new type
-     * (oak_door in stone) are left as they are.
+     * waxed first for a waxed block, then the wall for a fence and the fence for a wall (oak_fence: granite_wall);
+     * empty if it is not of that type. The blocks with no version in the new type (oak_door in stone) are left as
+     * they are.
      */
     static List<String> retype(String name, String from, String to) {
         boolean waxed = name.startsWith(WAXED);
@@ -115,7 +116,19 @@ final class TypeReplace {
         if (shape == null) {
             return List.of();
         }
-        String renamed = shape.isEmpty() ? to : stem(to) + "_" + shape;
-        return waxed ? List.of(WAXED + renamed, renamed) : List.of(renamed);
+        List<String> shapes = switch (shape) {
+            case "fence" -> List.of("fence", "wall");
+            case "wall" -> List.of("wall", "fence");
+            default -> List.of(shape);
+        };
+        List<String> names = new ArrayList<>();
+        for (String other : shapes) {
+            String renamed = other.isEmpty() ? to : stem(to) + "_" + other;
+            if (waxed) {
+                names.add(WAXED + renamed);
+            }
+            names.add(renamed);
+        }
+        return names;
     }
 }
