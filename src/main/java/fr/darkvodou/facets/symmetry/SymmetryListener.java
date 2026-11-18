@@ -154,7 +154,7 @@ public final class SymmetryListener implements Listener {
      */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        sessions.remove(event.getPlayer().getUniqueId());
+        sessions.forget(event.getPlayer().getUniqueId());
     }
 
     @Nullable

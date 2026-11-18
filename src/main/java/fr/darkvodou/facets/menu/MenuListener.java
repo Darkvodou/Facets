@@ -267,6 +267,22 @@ public final class MenuListener implements Listener {
         menu.set(19, item(Material.TARGET, Messages.plain("menu.symmetry.set"), Messages.lines("menu.symmetry.set-lore"),
                 false), click -> player.chat("//sym set " + (click.isRightClick() ? "even" : "odd")));
         Symmetry.Second second = symmetry == null ? null : symmetry.second();
+        Symmetry removed = symmetries.restorable(player.getUniqueId());
+        if (symmetry == null && removed != null) {
+            menu.set(20, item(Material.TOTEM_OF_UNDYING, Messages.plain("menu.symmetry.restore"),
+                    Messages.lines("menu.symmetry.restore-lore", "type", removed.type().id(),
+                            "position", SymmetryCommand.position(removed.center(), removed.even()),
+                            "world", removed.world()), false), click -> player.chat("//sym restore"));
+        }
+        SymmetrySessions.RemovedSecond removedSecond = symmetries.restorableSecond(player.getUniqueId());
+        if (symmetry != null && second == null && removedSecond != null
+                && removedSecond.world().equals(symmetry.world())) {
+            Symmetry.Second restorable = removedSecond.second();
+            menu.set(25, item(Material.TOTEM_OF_UNDYING, Messages.plain("menu.symmetry.restore-second"),
+                    Messages.lines("menu.symmetry.restore-second-lore", "type", restorable.type().id(),
+                            "position", SymmetryCommand.position(restorable.center(), restorable.even())), false),
+                    click -> player.chat("//sym2 restore"));
+        }
         if (symmetry != null) {
             menu.set(20, item(symmetry.enabled() ? Material.LIME_DYE : Material.GRAY_DYE,
                     Messages.plain(symmetry.enabled() ? "menu.symmetry.pause" : "menu.symmetry.resume"),

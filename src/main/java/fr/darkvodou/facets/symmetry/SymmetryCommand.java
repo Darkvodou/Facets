@@ -22,8 +22,9 @@ import java.util.stream.Stream;
 
 /**
  * //sym [set [type] [even | odd] | placeaim [type] [even | odd] | type &lt;type&gt; | range &lt;blocks | max&gt; | swap
- * | share [player] | toggle | off | info] for the first symmetry,
- * //sym2 [set [type] [even | odd] | placeaim [type] [even | odd] | type &lt;type&gt; | swap | toggle | off | info] for
+ * | share [player] | toggle | off | restore | info] for the first symmetry (also //sym1),
+ * //sym2 [set [type] [even | odd] | placeaim [type] [even | odd] | type &lt;type&gt; | swap | toggle | off | restore
+ * | info] for
  * the second, which copies the first one too. The range is that of the first symmetry, for both; //sym toggle pauses
  * both, //sym2 toggle the second one only.
  * <p>
@@ -33,9 +34,9 @@ import java.util.stream.Stream;
 public final class SymmetryCommand implements TabExecutor {
 
     private static final String USAGE = "//sym [set [type] [even | odd] | placeaim [type] [even | odd] | type <type> "
-            + "| range <blocks | max> | swap | share [player] | toggle | off | info]";
+            + "| range <blocks | max> | swap | share [player] | toggle | off | restore | info]";
     private static final String USAGE_SECOND = "//sym2 [set [type] [even | odd] | placeaim [type] [even | odd] "
-            + "| type <type> | swap | toggle | off | info]";
+            + "| type <type> | swap | toggle | off | restore | info]";
 
     private final SymmetrySessions sessions;
     // //sym2: acts on the second symmetry
@@ -67,6 +68,7 @@ public final class SymmetryCommand implements TabExecutor {
                 case "swap" -> swap(player);
                 case "toggle" -> toggleSecond(player);
                 case "off", "clear", "remove" -> offSecond(player);
+                case "restore" -> restoreSecond(player);
                 case "info", "i" -> infoSecond(player);
                 default -> Messages.send(player, "usage", "usage", USAGE_SECOND);
             }
@@ -82,6 +84,7 @@ public final class SymmetryCommand implements TabExecutor {
             case "take" -> take(player, args);
             case "toggle" -> toggle(player);
             case "off", "clear", "remove" -> off(player);
+            case "restore" -> restore(player);
             case "info", "i" -> info(player);
             default -> Messages.send(player, "usage", "usage", USAGE);
         }
@@ -403,10 +406,25 @@ public final class SymmetryCommand implements TabExecutor {
     }
 
     /**
-     * //sym off: removes both symmetries.
+     * //sym off: removes both symmetries, kept for //sym restore.
      */
     private void off(Player player) {
-        Messages.send(player, sessions.remove(player.getUniqueId()) != null ? "symmetry.removed" : "symmetry.none");
+        Messages.send(player, sessions.off(player.getUniqueId()) != null ? "symmetry.removed" : "symmetry.none");
+    }
+
+    /**
+     * //sym restore: puts back the symmetries removed with //sym off, enabled. The current ones, if any, can be
+     * restored in turn.
+     */
+    private void restore(Player player) {
+        Symmetry restored = sessions.restore(player.getUniqueId());
+        if (restored == null) {
+            Messages.send(player, "symmetry.nothing-to-restore");
+            return;
+        }
+        Messages.send(player, "symmetry.restored", "type", restored.type().id(),
+                "position", position(restored.center(), restored.even()), "world", restored.world(),
+                "copies", restored.copyCount());
     }
 
     /**
@@ -415,9 +433,42 @@ public final class SymmetryCommand implements TabExecutor {
     private void offSecond(Player player) {
         Symmetry symmetry = existingSecond(player);
         if (symmetry != null) {
+            sessions.keepSecond(player.getUniqueId(), symmetry.world(), symmetry.second());
             sessions.set(player.getUniqueId(), symmetry.withSecond(null));
             Messages.send(player, "symmetry.second-removed");
         }
+    }
+
+    /**
+     * //sym2 restore: puts back the second symmetry removed with //sym2 off, enabled. The current second one, if
+     * any, can be restored in turn.
+     */
+    private void restoreSecond(Player player) {
+        Symmetry symmetry = existing(player);
+        if (symmetry == null) {
+            return;
+        }
+        SymmetrySessions.RemovedSecond removed = sessions.restorableSecond(player.getUniqueId());
+        if (removed == null) {
+            Messages.send(player, "symmetry.nothing-to-restore-second");
+            return;
+        }
+        if (!removed.world().equals(symmetry.world())) {
+            Messages.send(player, "symmetry.other-world", "world", symmetry.world());
+            return;
+        }
+        Symmetry.Second second = removed.second().withEnabled(true);
+        if (!combinable(player, symmetry.type(), second)) {
+            return;
+        }
+        sessions.takeSecond(player.getUniqueId());
+        if (symmetry.second() != null) {
+            sessions.keepSecond(player.getUniqueId(), symmetry.world(), symmetry.second());
+        }
+        Symmetry updated = symmetry.withSecond(second);
+        sessions.set(player.getUniqueId(), updated);
+        Messages.send(player, "symmetry.second-restored", "type", second.type().id(),
+                "position", position(second.center(), second.even()), "copies", updated.copyCount());
     }
 
     private void info(Player player) {
@@ -542,8 +593,9 @@ public final class SymmetryCommand implements TabExecutor {
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         if (args.length == 1) {
-            Stream<String> subs = second ? Stream.of("set", "placeaim", "type", "swap", "toggle", "off", "info")
-                    : Stream.of("set", "placeaim", "type", "range", "swap", "share", "toggle", "off", "info");
+            Stream<String> subs = second ? Stream.of("set", "placeaim", "type", "swap", "toggle", "off", "restore", "info")
+                    : Stream.of("set", "placeaim", "type", "range", "swap", "share", "toggle", "off", "restore",
+                    "info");
             return subs.filter(s -> s.startsWith(last)).toList();
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
