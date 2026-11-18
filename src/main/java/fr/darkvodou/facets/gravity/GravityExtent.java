@@ -1,12 +1,16 @@
 package fr.darkvodou.facets.gravity;
 
 import com.fastasyncworldedit.core.extent.filter.block.ExtentFilterBlock;
+import com.fastasyncworldedit.core.extent.processor.ExtentBatchProcessorHolder;
 import com.fastasyncworldedit.core.math.BlockVectorSet;
 import com.fastasyncworldedit.core.queue.Filter;
+import com.fastasyncworldedit.core.util.ExtentTraverser;
+import com.fastasyncworldedit.core.util.ProcessorTraverser;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.extent.AbstractDelegateExtent;
 import com.sk89q.worldedit.extent.Extent;
+import com.sk89q.worldedit.extent.MaskingExtent;
 import com.sk89q.worldedit.function.RegionMaskingFilter;
 import com.sk89q.worldedit.function.block.BlockReplace;
 import com.sk89q.worldedit.function.mask.BlockMask;
@@ -43,6 +47,10 @@ import java.util.stream.Collectors;
  * A falling block goes through air, liquids and the blocks replaced when placing a block (grass, fire...), and
  * falls out of the world when nothing stops it. A concrete powder landing in water becomes concrete.
  * <p>
+ * FAWE applies the edit's mask (a brush's /mask, /gmask) below this extent, when the chunks are written. So it is
+ * applied here too: what the mask refuses is not written, and a falling block cannot go through a position the mask
+ * refuses, it lands on it.
+ * <p>
  * FAWE's fast paths (whole regions at once) skip setBlock, so they are done here block by block.
  */
 final class GravityExtent extends AbstractDelegateExtent {
@@ -56,6 +64,9 @@ final class GravityExtent extends AbstractDelegateExtent {
     private final BlockVectorSet written = new BlockVectorSet();
     private final BlockVectorSet free = new BlockVectorSet();
     private final BlockVectorSet water = new BlockVectorSet();
+    // The edit's mask, found with the first block: set on the edit after this extent is made
+    private MaskingExtent masking;
+    private boolean maskingFound;
 
     GravityExtent(Extent extent) {
         super(extent);
@@ -70,6 +81,9 @@ final class GravityExtent extends AbstractDelegateExtent {
     @Override
     public synchronized <T extends BlockStateHolder<T>> boolean setBlock(int x, int y, int z, T block)
             throws WorldEditException {
+        if (!allowed(x, y, z)) {
+            return false;
+        }
         long key = key(x, z);
         Column column = columns.get(key);
         BlockType type = block.getBlockType();
@@ -125,7 +139,7 @@ final class GravityExtent extends AbstractDelegateExtent {
         BaseBlock[] falling = blocks.values().toArray(BaseBlock[]::new);
         int[] landings = Falls.land(ys, minY, y -> written.contains(x, y, z)
                 ? free.contains(x, y, z)
-                : isFree(getExtent().getBlock(x, y, z).getBlockType()));
+                : isFree(getExtent().getBlock(x, y, z).getBlockType()) && allowed(x, y, z));
         Map<Integer, BaseBlock> writes = new HashMap<>();
         for (int i = 0; i < ys.length; i++) {
             int y = ys[i];
@@ -144,6 +158,24 @@ final class GravityExtent extends AbstractDelegateExtent {
         for (Map.Entry<Integer, BaseBlock> write : writes.entrySet()) {
             getExtent().setBlock(x, write.getKey(), z, write.getValue());
         }
+    }
+
+    /**
+     * @return whether the edit's mask lets a block be written at the position
+     */
+    private boolean allowed(int x, int y, int z) {
+        if (!maskingFound) {
+            maskingFound = true;
+            masking = new ExtentTraverser<>(getExtent()).findAndGet(MaskingExtent.class);
+            if (masking == null) {
+                ExtentBatchProcessorHolder holder = new ExtentTraverser<>(getExtent())
+                        .findAndGet(ExtentBatchProcessorHolder.class);
+                if (holder != null) {
+                    masking = new ProcessorTraverser<>(holder.getProcessor()).find(MaskingExtent.class);
+                }
+            }
+        }
+        return masking == null || masking.getMask().test(BlockVector3.at(x, y, z));
     }
 
     private boolean inWater(int x, int y, int z) {
