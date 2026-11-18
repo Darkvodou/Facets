@@ -34,6 +34,8 @@ import org.bukkit.plugin.Plugin;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 
 /**
  * Copies what players with a symmetry change: FAWE edits through {@link SymmetryExtent}, and the blocks placed,
@@ -43,10 +45,26 @@ public final class SymmetryListener implements Listener {
 
     private final Plugin plugin;
     private final SymmetrySessions sessions;
+    // Blocks placed by hand that another plugin copies itself
+    private final List<Predicate<BlockPlaceEvent>> ignored = new CopyOnWriteArrayList<>();
 
     public SymmetryListener(Plugin plugin, SymmetrySessions sessions) {
         this.plugin = plugin;
         this.sessions = sessions;
+    }
+
+    /**
+     * Stops copying the placed blocks matching the filter, for an addon copying them its own way.
+     */
+    public void ignorePlacements(Predicate<BlockPlaceEvent> filter) {
+        ignored.add(filter);
+    }
+
+    /**
+     * Copies again the placed blocks given to {@link #ignorePlacements(Predicate)}.
+     */
+    public void copyPlacements(Predicate<BlockPlaceEvent> filter) {
+        ignored.remove(filter);
     }
 
     /**
@@ -76,7 +94,7 @@ public final class SymmetryListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
         Symmetry symmetry = active(event.getPlayer(), event.getBlock().getWorld());
-        if (symmetry == null) {
+        if (symmetry == null || ignored.stream().anyMatch(filter -> filter.test(event))) {
             return;
         }
         Block block = event.getBlockPlaced();

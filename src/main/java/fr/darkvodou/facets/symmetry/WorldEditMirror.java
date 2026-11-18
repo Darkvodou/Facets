@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Applies {@link BlockStateMirror} to WorldEdit block states. Results are cached, a state always turning the same way.
  */
-final class WorldEditMirror {
+public final class WorldEditMirror {
 
     private static final Map<Long, BlockState> CACHE = new ConcurrentHashMap<>();
 
@@ -34,7 +34,10 @@ final class WorldEditMirror {
         return state;
     }
 
-    static BlockState transform(BlockState state, Transform transform) {
+    /**
+     * @return the block state turned by the transform
+     */
+    public static BlockState transform(BlockState state, Transform transform) {
         if (transform.isIdentity() || state.getStates().isEmpty()) {
             return state;
         }

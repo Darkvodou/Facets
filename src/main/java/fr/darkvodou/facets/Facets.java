@@ -73,6 +73,20 @@ public final class Facets extends JavaPlugin {
         getServer().getPluginManager().registerEvents(listener, this);
     }
 
+    /**
+     * The symmetries of the players, for addons.
+     */
+    public SymmetrySessions symmetries() {
+        return symmetries;
+    }
+
+    /**
+     * Copies the blocks placed by hand, for addons.
+     */
+    public SymmetryListener symmetryListener() {
+        return symmetryListener;
+    }
+
     @Override
     public void onDisable() {
         if (symmetryListener != null) {
