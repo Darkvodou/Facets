@@ -1,13 +1,7 @@
 package fr.darkvodou.facets.deform;
 
-import com.fastasyncworldedit.core.command.tool.brush.BrushSettings;
-import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.WorldEditException;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.command.tool.BrushTool;
-import com.sk89q.worldedit.command.tool.brush.Brush;
 import fr.darkvodou.facets.Messages;
+import fr.darkvodou.facets.brush.BrushCommand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -26,7 +20,7 @@ public final class DeformBrushCommand implements TabExecutor {
 
     private static final String USAGE = " magnet [radius] [force] [-m <mask>] [-t]";
     private static final int DEFAULT_RADIUS = 5;
-    static final String PERMISSION = "facets.fdeform";
+    public static final String PERMISSION = "facets.fdeform";
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -53,32 +47,14 @@ public final class DeformBrushCommand implements TabExecutor {
             return true;
         }
 
-        com.sk89q.worldedit.entity.Player actor = BukkitAdapter.adapt(player);
-        LocalSession session = WorldEdit.getInstance().getSessionManager().get(actor);
-        try {
-            WorldEdit.getInstance().checkMaxBrushRadius(radius, actor);
-            // Like FAWE's own brush commands: the item gets a new brush tool
-            session.setTool(actor, null);
-            BrushTool tool = session.getBrushTool(actor);
-            // FAWE's primary action is the right click, its secondary one the left click
-            MagnetBrush.Zone zone = new MagnetBrush.Zone();
-            tool.setPrimary(settings(args, radius, new MagnetBrush(zone, force, options.mask(), options.trim())));
-            tool.setSecondary(settings(args, radius, new MagnetBrush.Select(zone)));
-        } catch (WorldEditException e) {
-            actor.printError(e.getRichMessage());
+        // The left click chooses the zone, the right click pulls it
+        MagnetBrush.Zone zone = new MagnetBrush.Zone();
+        if (!BrushCommand.bind(player, args, radius, PERMISSION,
+                new MagnetBrush(zone, force, options.mask(), options.trim()), new MagnetBrush.Select(zone))) {
             return true;
         }
         Messages.send(player, "fdeform.brush-bound", "radius", radius, "force", force);
         return true;
-    }
-
-    private static BrushSettings settings(String[] args, int radius, Brush brush) {
-        BrushSettings settings = new BrushSettings();
-        settings.addSetting(BrushSettings.SettingType.BRUSH, "fbrush " + String.join(" ", args));
-        settings.addPermission(PERMISSION);
-        settings.setBrush(brush);
-        settings.setSize(radius);
-        return settings;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package fr.darkvodou.facets;
 
+import fr.darkvodou.facets.brush.BrushCommand;
+import fr.darkvodou.facets.cover.FixCoverBrushCommand;
 import fr.darkvodou.facets.cover.FixCoverCommand;
 import fr.darkvodou.facets.deform.DeformBrushCommand;
 import fr.darkvodou.facets.deform.DeformCommand;
@@ -48,7 +50,9 @@ final class CommandManager {
         register(new GravityCommand(gravity), "/gravity");
         register(new FixCoverCommand(plugin), "/fixcover");
         register(new DeformCommand(plugin), "/fdeform");
-        register(new DeformBrushCommand(), "/fbrush");
+        register(new BrushCommand()
+                .add("magnet", DeformBrushCommand.PERMISSION, new DeformBrushCommand())
+                .add("fixcover", FixCoverBrushCommand.PERMISSION, new FixCoverBrushCommand()), "/fbrush");
         register(new SpeedCommand(), "speed");
         ReplaceColorCommand replaceColor = new ReplaceColorCommand(plugin);
         plugin.listen(replaceColor);

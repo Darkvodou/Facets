@@ -11,9 +11,6 @@ import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.EllipsoidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.World;
-import com.sk89q.worldedit.world.block.BaseBlock;
-import com.sk89q.worldedit.world.block.BlockState;
-import com.sk89q.worldedit.world.block.BlockTypes;
 import fr.darkvodou.facets.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -23,9 +20,7 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 
@@ -96,29 +91,8 @@ public final class FixCoverCommand implements TabExecutor {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             // Made by the session, so it holds the global mask: the plants it rejects are left as they are
             EditSession editSession = session.createEditSession(actor, "/fixcover");
-            int minY = world.getMinY();
-            int maxY = world.getMaxY();
             try {
-                // Every change is worked out before the first one is made, so they are all read from the same blocks
-                List<Map.Entry<BlockVector3, BaseBlock>> changes = new ArrayList<>();
-                for (BlockVector3 next : region) {
-                    // FAWE's cuboid regions give the same mutable vector for every block: kept, it must be copied
-                    BlockVector3 position = next.toImmutable();
-                    if (position.y() < minY || position.y() > maxY) {
-                        continue;
-                    }
-                    BlockState state = editSession.getBlock(position);
-                    if (!Cover.isCover(state)) {
-                        continue;
-                    }
-                    BlockState fixed = Cover.fix(state, position, editSession::getBlock, randomizer);
-                    if (!fixed.equals(state)) {
-                        changes.add(Map.entry(position, withData(editSession.getFullBlock(position), fixed)));
-                    }
-                }
-                for (Map.Entry<BlockVector3, BaseBlock> change : changes) {
-                    editSession.setBlock(change.getKey(), change.getValue());
-                }
+                CoverFixer.fix(editSession, region, randomizer);
             } catch (WorldEditException e) {
                 Messages.send(player, "fixcover.failed", "message", e.getMessage());
             } catch (RuntimeException e) {
@@ -132,17 +106,6 @@ public final class FixCoverCommand implements TabExecutor {
                     "count", editSession.getBlockChangeCount());
         });
         return true;
-    }
-
-    /**
-     * @return the fixed block with the data of the block it replaces (banner patterns, shelf items), unless removed
-     */
-    private static BaseBlock withData(BaseBlock block, BlockState fixed) {
-        if (block.getNbtReference() == null || fixed.getBlockType().getMaterial().isAir()
-                || fixed.getBlockType() == BlockTypes.WATER) {
-            return fixed.toBaseBlock();
-        }
-        return fixed.toBaseBlock(block.getNbtReference());
     }
 
     @Override

@@ -54,10 +54,9 @@ commands:
     usage: "//fdeform magnet [force] [-m <mask>] [-t]"
     permission: facets.fdeform
   /fbrush:
-    description: "Binds a FAWE magnet brush: left click chooses the zone, right click pulls it toward the point clicked (/size, /range, /mask, /tracemask work on it)."
-    usage: "//fbrush magnet [radius] [force] [-m <mask>] [-t]"
+    description: "Binds a FAWE brush. magnet: left click chooses the zone, right click pulls it toward the point clicked. fixcover: right click does //fixcover around the point clicked. /size, /range, /mask, /tracemask work on them."
+    usage: "//fbrush <magnet [radius] [force] [-m <mask>] [-t] | fixcover <radius> [-r]>"
     aliases: [/fbr]
-    permission: facets.fdeform
   /replacecolor:
     description: Changes the color of the blocks in the selection, keeping their state.
     usage: "//replacecolor [color] [new color]"
@@ -101,10 +100,10 @@ permissions:
     description: Use //gravity.
     default: op
   facets.fixcover:
-    description: Use //fixcover.
+    description: Use //fixcover and //fbrush fixcover.
     default: op
   facets.fdeform:
-    description: Use //fdeform and //fbrush.
+    description: Use //fdeform and //fbrush magnet.
     default: op
   facets.replacecolor:
     description: Use //replacecolor.
