@@ -2,7 +2,7 @@
 
 A growing toolbox for builders using [FastAsyncWorldEdit](https://github.com/IntellectualSites/FastAsyncWorldEdit) on Paper.
 
-📖 **Documentation: [the wiki](https://github.com/Darkvodou/Facets/wiki)**
+**Documentation: [the wiki](https://github.com/Darkvodou/Facets/wiki)**
 
 ## Features
 
