@@ -56,7 +56,7 @@ commands:
   /fbrush:
     description: "Binds a FAWE brush. magnet: left click chooses the zone, right click pulls it toward the point clicked. fixcover: right click does //fixcover around the point clicked. /size, /range, /mask, /tracemask work on them."
     usage: "//fbrush <magnet [radius] [force] [-m <mask>] [-t] | fixcover <radius> [-r]>"
-    aliases: [/fbr]
+    aliases: [/fbr, fbrush, fbr]
   /replacecolor:
     description: Changes the color of the blocks in the selection, keeping their state.
     usage: "//replacecolor [color] [new color]"
