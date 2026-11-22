@@ -25,10 +25,11 @@ import java.util.Random;
 import java.util.logging.Level;
 
 /**
- * //fixcover [radius] [-r]: makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders,
+ * //fixcover [radius] [-r] [-n -s -e -w -u -d]: makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders,
  * amethyst clusters and buds, shelves, trapdoors, banners, coral fans and buttons of the selection (or of the sphere
  * around the player) hold on the blocks next to them (see {@link Cover}). The blocks that could hold on several faces
- * are removed, or with -r turned to one of them at random. The global mask (//gmask) chooses which of them are fixed.
+ * are removed, or with -r turned to one of them at random. -n -s -e -w -u -d forbid holding on the block in that
+ * direction. The global mask (//gmask) chooses which of them are fixed.
  */
 public final class FixCoverCommand implements TabExecutor {
 
@@ -44,18 +45,12 @@ public final class FixCoverCommand implements TabExecutor {
             Messages.send(sender, "player-only");
             return true;
         }
-        boolean random = false;
-        String radiusArg = null;
-        for (String arg : args) {
-            if (arg.equalsIgnoreCase("-r") || arg.equalsIgnoreCase("-random")) {
-                random = true;
-            } else if (radiusArg == null) {
-                radiusArg = arg;
-            } else {
-                Messages.send(player, "usage", "usage", "/" + label + " [radius] [-r]");
-                return true;
-            }
+        CoverOptions options = CoverOptions.parse(args, 0);
+        if (options == null) {
+            Messages.send(player, "usage", "usage", "/" + label + " [radius] " + CoverOptions.FLAGS);
+            return true;
         }
+        String radiusArg = options.radius();
         com.sk89q.worldedit.entity.Player actor = BukkitAdapter.adapt(player);
         World world = actor.getWorld();
         Region region;
@@ -87,12 +82,12 @@ public final class FixCoverCommand implements TabExecutor {
         }
 
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(actor);
-        Random randomizer = random ? new Random() : null;
+        Random randomizer = options.randomizer();
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             // Made by the session, so it holds the global mask: the plants it rejects are left as they are
             EditSession editSession = session.createEditSession(actor, "/fixcover");
             try {
-                CoverFixer.fix(editSession, region, randomizer);
+                CoverFixer.fix(editSession, region, randomizer, options.excluded());
             } catch (WorldEditException e) {
                 Messages.send(player, "fixcover.failed", "message", e.getMessage());
             } catch (RuntimeException e) {
@@ -110,12 +105,6 @@ public final class FixCoverCommand implements TabExecutor {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        String last = args.length == 0 ? "" : args[args.length - 1];
-        for (int i = 0; i < args.length - 1; i++) {
-            if (args[i].equalsIgnoreCase("-r") || args[i].equalsIgnoreCase("-random")) {
-                return List.of();
-            }
-        }
-        return "-r".startsWith(last.toLowerCase()) ? List.of("-r") : List.of();
+        return CoverOptions.complete(args, 0, List.of());
     }
 }

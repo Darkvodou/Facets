@@ -10,18 +10,16 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.EllipsoidRegion;
 
-import java.util.Random;
-
 /**
  * The brush of //fixcover: fixes the covers of the sphere of the brush size around the point clicked. FAWE handles the
  * rest like for its own brushes: /size, /range, /mask (with the global mask, chooses which covers are fixed), //undo...
  */
 final class FixCoverBrush implements Brush {
 
-    private final boolean random;
+    private final CoverOptions options;
 
-    FixCoverBrush(boolean random) {
-        this.random = random;
+    FixCoverBrush(CoverOptions options) {
+        this.options = options;
     }
 
     @Override
@@ -30,7 +28,7 @@ final class FixCoverBrush implements Brush {
         EllipsoidRegion region = new EllipsoidRegion(editSession.getWorld(), position.toImmutable(),
                 Vector3.at(size, size, size));
         try {
-            CoverFixer.fix(editSession, region, random ? new Random() : null);
+            CoverFixer.fix(editSession, region, options.randomizer(), options.excluded());
         } catch (MaxChangedBlocksException e) {
             throw e;
         } catch (WorldEditException e) {

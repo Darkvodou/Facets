@@ -132,8 +132,7 @@ fixcover:
   none: "{warning}Nothing to fix."
   failed: "{error}An error occurred: {message}"
   brush-radius-range: "{error}The radius must be at least 1."
-  brush-bound: "{info}Fix cover brush bound to the item in hand (radius {radius}): right click fixes the covers around the point clicked. Unbind it with //none."
-  brush-bound-random: "{info}Fix cover brush bound to the item in hand (radius {radius}, random): right click fixes the covers around the point clicked. Unbind it with //none."
+  brush-bound: "{info}Fix cover brush bound to the item in hand (radius {radius}{options}): right click fixes the covers around the point clicked. Unbind it with //none."
 
 fdeform:
   no-selection: "{error}Make a selection first."

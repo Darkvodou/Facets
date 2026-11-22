@@ -46,8 +46,8 @@ commands:
     usage: "//gravity"
     permission: facets.gravity
   /fixcover:
-    description: Makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders, amethyst, shelves, trapdoors, banners, coral fans and buttons hold on the blocks next to them (follows the gmask). The blocks that could hold on several faces are removed, -r turns them to one of them at random.
-    usage: "//fixcover [radius] [-r]"
+    description: Makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders, amethyst, shelves, trapdoors, banners, coral fans and buttons hold on the blocks next to them (follows the gmask). The blocks that could hold on several faces are removed, -r turns them to one of them at random. -n -s -e -w -u -d forbid holding on the block in that direction.
+    usage: "//fixcover [radius] [-r] [-n -s -e -w -u -d]"
     permission: facets.fixcover
   /fdeform:
     description: Deforms the selection. magnet pulls it toward you, the closest blocks the most (force 1 to 100, 100 brings the first solid block 90% of the way, -m only pulls the blocks matching the mask, like //move -m, -t lets the blocks go out of the selection).
@@ -55,7 +55,7 @@ commands:
     permission: facets.fdeform
   /fbrush:
     description: "Binds a FAWE brush. magnet: left click chooses the zone, right click pulls it toward the point clicked. fixcover: right click does //fixcover around the point clicked. /size, /range, /mask, /tracemask work on them."
-    usage: "//fbrush <magnet [radius] [force] [-m <mask>] [-t] | fixcover <radius> [-r]>"
+    usage: "//fbrush <magnet [radius] [force] [-m <mask>] [-t] | fixcover <radius> [-r] [-n -s -e -w -u -d]>"
     aliases: [/fbr, fbrush, fbr]
   /replacecolor:
     description: Changes the color of the blocks in the selection, keeping their state.

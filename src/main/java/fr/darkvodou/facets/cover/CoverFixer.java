@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Fixes the covers of a region (see {@link Cover}), for //fixcover and its brush.
@@ -25,9 +26,11 @@ final class CoverFixer {
     /**
      * Fixes the covers of the region through the edit session, whose masks choose which of them are changed.
      *
-     * @param random turns the blocks that could hold on several faces to one of them at random, or removes them if null
+     * @param random   turns the blocks that could hold on several faces to one of them at random, or removes them if null
+     * @param excluded the faces that never hold anything
      */
-    static void fix(EditSession editSession, Region region, @Nullable Random random) throws WorldEditException {
+    static void fix(EditSession editSession, Region region, @Nullable Random random, Set<Cover.Face> excluded)
+            throws WorldEditException {
         int minY = editSession.getWorld().getMinY();
         int maxY = editSession.getWorld().getMaxY();
         // Every change is worked out before the first one is made, so they are all read from the same blocks
@@ -42,7 +45,7 @@ final class CoverFixer {
             if (!Cover.isCover(state)) {
                 continue;
             }
-            BlockState fixed = Cover.fix(state, position, editSession::getBlock, random);
+            BlockState fixed = Cover.fix(state, position, editSession::getBlock, random, excluded);
             if (!fixed.equals(state)) {
                 changes.add(Map.entry(position, withData(editSession.getFullBlock(position), fixed)));
             }

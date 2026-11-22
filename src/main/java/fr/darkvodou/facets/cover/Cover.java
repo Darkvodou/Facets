@@ -27,6 +27,7 @@ import java.util.function.Function;
  * the walls for ladders, shelves and banners, never the ceiling for coral fans): they turn to the only block next to
  * them that holds them, and are removed when several do (or turned to one of them at random) or none does.</li>
  * </ul>
+ * The excluded faces never hold anything: -n forbids holding on the block to the south (the blocks facing north).
  */
 final class Cover {
 
@@ -42,7 +43,7 @@ final class Cover {
     /**
      * The faces around a block: its property, where the neighbor is and which face of the neighbor holds it.
      */
-    private enum Face {
+    enum Face {
         NORTH("north", BlockVector3.UNIT_MINUS_Z, BlockFace.SOUTH),
         SOUTH("south", BlockVector3.UNIT_Z, BlockFace.NORTH),
         WEST("west", BlockVector3.UNIT_MINUS_X, BlockFace.EAST),
@@ -75,8 +76,24 @@ final class Cover {
             };
         }
 
-        static Face of(String direction) {
-            return valueOf(direction.toUpperCase(Locale.ROOT));
+        /**
+         * The flag excluding this face: the way the blocks held there face, away from it (-u for the floor, where
+         * stairs stand the right way up, -n for the wall to the south).
+         */
+        char flag() {
+            return opposite().property.charAt(0);
+        }
+
+        /**
+         * @return the face of a direction flag (n, s, e, w, u, d), null for another letter
+         */
+        static Face ofFlag(char letter) {
+            for (Face face : values()) {
+                if (face.flag() == letter) {
+                    return face;
+                }
+            }
+            return null;
         }
     }
 
@@ -85,6 +102,28 @@ final class Cover {
     private static final Map<BlockType, Kind> KINDS = new ConcurrentHashMap<>();
 
     private Cover() {
+    }
+
+    /**
+     * The blocks around, by position, and the faces that never hold anything.
+     */
+    private record Around(Function<BlockVector3, BlockState> world, Set<Face> excluded) {
+
+        BlockState at(BlockVector3 position) {
+            return world.apply(position);
+        }
+
+        /**
+         * Whether the neighbor of the block at this position, on this face, can hold it. The blocks fixed here never
+         * do: they may turn (the back of a ladder is a full face, so a row of ladders would hold each other).
+         */
+        boolean holds(BlockVector3 position, Face face) {
+            if (excluded.contains(face)) {
+                return false;
+            }
+            BlockState neighbor = world.apply(position.add(face.offset));
+            return !isCover(neighbor) && Cover.holds(neighbor, face.holding);
+        }
     }
 
     private static Kind kind(BlockState state) {
@@ -156,15 +195,6 @@ final class Cover {
         return (faces & 1 << face.ordinal()) != 0;
     }
 
-    /**
-     * Whether the neighbor of the block at this position, on this face, can hold it. The blocks fixed here never do:
-     * they may turn (the back of a ladder is a full face, so a row of ladders would hold each other).
-     */
-    private static boolean holds(BlockVector3 position, Face face, Function<BlockVector3, BlockState> world) {
-        BlockState neighbor = world.apply(position.add(face.offset));
-        return !isCover(neighbor) && holds(neighbor, face.holding);
-    }
-
     @SuppressWarnings("unchecked")
     private static Property<Boolean> property(BlockState state, String name) {
         return (Property<Boolean>) state.getBlockType().getPropertyMap().get(name);
@@ -194,32 +224,34 @@ final class Cover {
     }
 
     /**
-     * @param world  the blocks around, by position
-     * @param random picks one of the faces when several can hold a block holding on one face, null removes it
+     * @param world    the blocks around, by position
+     * @param random   picks one of the placements when several are as good, null removes the block
+     * @param excluded the faces that never hold anything
      * @return the block holding on the blocks next to it, air (or water when waterlogged) when nothing can hold it
      */
     static BlockState fix(BlockState state, BlockVector3 position, Function<BlockVector3, BlockState> world,
-                          Random random) {
+                          Random random, Set<Face> excluded) {
+        Around around = new Around(world, excluded);
         return switch (kind(state)) {
             case NONE -> state;
-            case MULTIFACE -> fixMultiface(state, position, world);
-            case MOSS_CARPET -> fixMossCarpet(state, position, world);
-            default -> fixPlaced(state, position, world, random);
+            case MULTIFACE -> fixMultiface(state, position, around);
+            case MOSS_CARPET -> fixMossCarpet(state, position, around);
+            default -> fixPlaced(state, position, around, random);
         };
     }
 
     /**
      * A hanging vine keeps a side face when the vine above has it, up to the vine holding on a block.
      */
-    private static boolean hangs(BlockVector3 position, Face face, Function<BlockVector3, BlockState> world) {
+    private static boolean hangs(BlockVector3 position, Face face, Around around) {
         BlockVector3 above = position.add(BlockVector3.UNIT_Y);
         for (int i = 0; i < 512; i++, above = above.add(BlockVector3.UNIT_Y)) {
-            BlockState state = world.apply(above);
+            BlockState state = around.at(above);
             Property<Boolean> property = property(state, face.property);
             if (!isVine(state) || property == null || !state.getState(property)) {
                 return false;
             }
-            if (holds(above, face, world)) {
+            if (around.holds(above, face)) {
                 return true;
             }
         }
@@ -230,7 +262,7 @@ final class Cover {
      * Glow lichen, sculk veins, resin clumps and vines: a face on each block next to them that can hold them.
      */
     private static BlockState fixMultiface(BlockState state, BlockVector3 position,
-                                           Function<BlockVector3, BlockState> world) {
+                                           Around around) {
         boolean vine = isVine(state);
         BlockState result = state;
         boolean any = false;
@@ -239,8 +271,8 @@ final class Cover {
             if (property == null) {
                 continue;
             }
-            boolean on = holds(position, face, world)
-                    || vine && face.side() && state.getState(property) && hangs(position, face, world);
+            boolean on = around.holds(position, face)
+                    || vine && face.side() && state.getState(property) && hangs(position, face, around);
             result = result.with(property, on);
             any |= on;
         }
@@ -252,13 +284,13 @@ final class Cover {
      * next to it, and is removed when it holds on nothing.
      */
     private static BlockState fixMossCarpet(BlockState state, BlockVector3 position,
-                                            Function<BlockVector3, BlockState> world) {
-        boolean bottom = holds(position, Face.DOWN, world);
+                                            Around around) {
+        boolean bottom = around.holds(position, Face.DOWN);
         BlockState result = with(state, "bottom", String.valueOf(bottom));
         boolean any = bottom;
         for (Face face : Face.values()) {
             if (face.side()) {
-                boolean wall = holds(position, face, world);
+                boolean wall = around.holds(position, face);
                 result = with(result, face.property, wall ? "tall" : "none");
                 any |= wall;
             }
@@ -272,15 +304,15 @@ final class Cover {
      * never hang from the ceiling.
      */
     private static boolean touches(Kind kind, BlockVector3 position, Face face,
-                                   Function<BlockVector3, BlockState> world) {
+                                   Around around) {
         return switch (kind) {
             case BANNER, WALL_BANNER -> {
-                BlockState neighbor = world.apply(position.add(face.offset));
-                yield face.side() && !isCover(neighbor) && neighbor.getBlockType().getMaterial().isSolid();
+                BlockState neighbor = around.at(position.add(face.offset));
+                yield face.side() && !around.excluded().contains(face) && !isCover(neighbor) && neighbor.getBlockType().getMaterial().isSolid();
             }
-            case LADDER, SHELF -> face.side() && holds(position, face, world);
-            case CORAL_FAN, CORAL_WALL_FAN -> face != Face.UP && holds(position, face, world);
-            default -> holds(position, face, world);
+            case LADDER, SHELF -> face.side() && around.holds(position, face);
+            case CORAL_FAN, CORAL_WALL_FAN -> face != Face.UP && around.holds(position, face);
+            default -> around.holds(position, face);
         };
     }
 
@@ -333,11 +365,11 @@ final class Cover {
      * them, and when none does.
      */
     private static BlockState fixPlaced(BlockState state, BlockVector3 position,
-                                        Function<BlockVector3, BlockState> world, Random random) {
+                                        Around around, Random random) {
         Kind kind = kind(state);
         List<BlockState> placements = new ArrayList<>();
         for (Face face : Face.values()) {
-            if (touches(kind, position, face, world)) {
+            if (touches(kind, position, face, around)) {
                 BlockState placed = place(kind, state, face);
                 if (placed != null) {
                     placements.add(placed);
