@@ -28,8 +28,9 @@ import java.util.logging.Level;
  * //fixcover [radius] [-r] [-n -s -e -w -u -d]: makes the glow lichen, sculk veins, resin clumps, vines, pale moss carpets, ladders,
  * amethyst clusters and buds, shelves, trapdoors, banners, coral fans and buttons of the selection (or of the sphere
  * around the player) hold on the blocks next to them (see {@link Cover}). The blocks that could hold on several faces
- * are removed, or with -r turned to one of them at random. -n -s -e -w -u -d forbid holding on the block in that
- * direction. The global mask (//gmask) chooses which of them are fixed.
+ * are removed, or with -r turned to one of them at random. Stairs turn their full faces against the blocks next to
+ * them. -n -s -e -w -u -d forbid holding on the block in that direction. The global mask (//gmask) chooses which of
+ * them are fixed.
  */
 public final class FixCoverCommand implements TabExecutor {
 

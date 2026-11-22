@@ -10,6 +10,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockSupport;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,14 +27,17 @@ import java.util.function.Function;
  * <li>pale moss carpets lie on the block below and climb the walls next to them, when they can hold them;</li>
  * <li>ladders, amethyst clusters and buds, shelves, trapdoors, banners, coral fans and buttons hold on one face (only
  * the walls for ladders, shelves and banners, never the ceiling for coral fans): they turn to the only block next to
- * them that holds them, and are removed when several do (or turned to one of them at random) or none does.</li>
+ * them that holds them, and are removed when several do (or turned to one of them at random) or none does;</li>
+ * <li>stairs turn their full faces (back, bottom or top, and the sides of an inner corner) against the most blocks
+ * that hold them, and are removed when several placements do as well (or turned to one of them at random) or none
+ * has all its full faces against them (one is enough at random).</li>
  * </ul>
  * The excluded faces never hold anything: -n forbids holding on the block to the south (the blocks facing north).
  */
 final class Cover {
 
     private enum Kind {
-        MULTIFACE, MOSS_CARPET, LADDER, AMETHYST, SHELF, TRAPDOOR, BANNER, WALL_BANNER, CORAL_FAN, CORAL_WALL_FAN, BUTTON, NONE
+        MULTIFACE, MOSS_CARPET, LADDER, AMETHYST, SHELF, TRAPDOOR, BANNER, WALL_BANNER, CORAL_FAN, CORAL_WALL_FAN, BUTTON, STAIRS, NONE
     }
 
     private static final Set<String> MULTIFACES = Set.of(
@@ -74,6 +79,23 @@ final class Cover {
                 case UP -> DOWN;
                 case DOWN -> UP;
             };
+        }
+
+        /**
+         * The next side face, clockwise seen from above.
+         */
+        Face clockwise() {
+            return switch (this) {
+                case NORTH -> EAST;
+                case EAST -> SOUTH;
+                case SOUTH -> WEST;
+                case WEST -> NORTH;
+                default -> this;
+            };
+        }
+
+        Face counterClockwise() {
+            return clockwise().clockwise().clockwise();
         }
 
         /**
@@ -162,6 +184,9 @@ final class Cover {
             if (id.endsWith("_banner")) {
                 return Kind.BANNER;
             }
+            if (id.endsWith("_stairs")) {
+                return Kind.STAIRS;
+            }
             return Kind.NONE;
         });
     }
@@ -236,6 +261,7 @@ final class Cover {
             case NONE -> state;
             case MULTIFACE -> fixMultiface(state, position, around);
             case MOSS_CARPET -> fixMossCarpet(state, position, around);
+            case STAIRS -> fixStairs(state, position, around, random);
             default -> fixPlaced(state, position, around, random);
         };
     }
@@ -380,5 +406,70 @@ final class Cover {
             return removed(state);
         }
         return placements.get(random == null ? 0 : random.nextInt(placements.size()));
+    }
+
+    /**
+     * Stairs: the placement putting the most full faces (back, bottom or top, sides of an inner corner) against blocks
+     * that hold them, then the one leaving the fewest full faces against nothing, then the one keeping its half.
+     * Removed when several placements are left (unless random picks one of them) or none has all its full faces against
+     * blocks holding it (one is enough at random).
+     */
+    private static BlockState fixStairs(BlockState state, BlockVector3 position, Around around, Random random) {
+        Set<Face> held = EnumSet.noneOf(Face.class);
+        for (Face face : Face.values()) {
+            if (around.holds(position, face)) {
+                held.add(face);
+            }
+        }
+        // An inner corner can be made from either of its two faces: each shape is kept once
+        Set<Set<Face>> shapes = new HashSet<>();
+        List<BlockState> best = new ArrayList<>();
+        int bestTouching = 1;
+        int bestExposed = Integer.MAX_VALUE;
+        for (Face facing : Face.values()) {
+            if (!facing.side()) {
+                continue;
+            }
+            for (Face vertical : new Face[]{Face.DOWN, Face.UP}) {
+                for (String shape : new String[]{"straight", "inner_left", "inner_right"}) {
+                    Set<Face> full = EnumSet.of(facing, vertical);
+                    if (shape.equals("inner_left")) {
+                        full.add(facing.counterClockwise());
+                    } else if (shape.equals("inner_right")) {
+                        full.add(facing.clockwise());
+                    }
+                    if (!shapes.add(full)) {
+                        continue;
+                    }
+                    int touching = (int) full.stream().filter(held::contains).count();
+                    int exposed = full.size() - touching;
+                    // Every full face against a block (two for straight stairs, three for a corner), unless random
+                    if (random == null && exposed > 0
+                            || touching < bestTouching ||touching == bestTouching && exposed > bestExposed) {
+                        continue;
+                    }
+                    if (touching > bestTouching || exposed < bestExposed) {
+                        best.clear();
+                        bestTouching = touching;
+                        bestExposed = exposed;
+                    }
+                    best.add(with(with(with(state, "facing", facing.property),
+                            "half", vertical == Face.UP ? "top" : "bottom"), "shape", shape));
+                }
+            }
+        }
+        if (best.size() > 1 && random == null) {
+            // Ties on the half alone keep the current one, random picks one of them
+            String half = get(state, "half");
+            List<BlockState> sameHalf = best.stream().filter(placed -> half != null && half.equals(get(placed, "half")))
+                    .toList();
+            if (!sameHalf.isEmpty()) {
+                best = sameHalf;
+            }
+        }
+        if (best.isEmpty() || best.size() > 1 && random == null) {
+            return removed(state);
+        }
+        return best.get(random == null ? 0 : random.nextInt(best.size()));
     }
 }
