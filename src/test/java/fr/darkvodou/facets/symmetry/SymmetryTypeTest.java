@@ -32,6 +32,8 @@ class SymmetryTypeTest {
         assertEquals(2, SymmetryType.PLANZX.copies());
         assertEquals(4, SymmetryType.CROSS2D.copies());
         assertEquals(8, SymmetryType.CROSS3D.copies());
+        assertEquals(4, SymmetryType.DIAGONAL2D.copies());
+        assertEquals(8, SymmetryType.DIAGONAL3D.copies());
         assertEquals(8, SymmetryType.STAR2D.copies());
         assertEquals(16, SymmetryType.STAR3D.copies());
         assertEquals(48, SymmetryType.MEGASTAR.copies());
@@ -69,6 +71,8 @@ class SymmetryTypeTest {
         assertEquals(9, SymmetryType.inMenu().size());
         assertTrue(!SymmetryType.inMenu().contains(SymmetryType.PLANXZ));
         assertTrue(!SymmetryType.inMenu().contains(SymmetryType.PLANZX));
+        assertTrue(!SymmetryType.inMenu().contains(SymmetryType.DIAGONAL2D));
+        assertTrue(!SymmetryType.inMenu().contains(SymmetryType.DIAGONAL3D));
     }
 
     @Test
@@ -134,6 +138,10 @@ class SymmetryTypeTest {
         assertEquals(SymmetryType.STAR3D, SymmetryType.STAR2D.withPlane(SymmetryType.PLANY));
         assertEquals(SymmetryType.STAR3D, SymmetryType.CROSS3D.withPlane(SymmetryType.PLANZX));
         assertEquals(SymmetryType.CROSS2D, SymmetryType.SIMPLE2D.withPlane(SymmetryType.PLANX));
+        assertEquals(SymmetryType.DIAGONAL2D, SymmetryType.PLANXZ.withPlane(SymmetryType.PLANZX));
+        assertEquals(SymmetryType.DIAGONAL3D, SymmetryType.DIAGONAL2D.withPlane(SymmetryType.PLANY));
+        assertEquals(SymmetryType.STAR2D, SymmetryType.DIAGONAL2D.withPlane(SymmetryType.PLANX));
+        assertEquals(SymmetryType.STAR3D, SymmetryType.DIAGONAL3D.withPlane(SymmetryType.PLANZ));
         // planx and plany together are no type
         assertNull(SymmetryType.PLANX.withPlane(SymmetryType.PLANY));
     }
@@ -145,8 +153,11 @@ class SymmetryTypeTest {
         assertEquals(SymmetryType.CROSS2D, SymmetryType.STAR2D.withoutPlane(SymmetryType.PLANZX));
         assertEquals(SymmetryType.CROSS2D, SymmetryType.CROSS3D.withoutPlane(SymmetryType.PLANY));
         assertEquals(SymmetryType.PLANZ, SymmetryType.CROSS2D.withoutPlane(SymmetryType.PLANX));
-        // Without planx, star2d keeps planz, planxz and planzx: no single type has the most of them
-        assertNull(SymmetryType.STAR2D.withoutPlane(SymmetryType.PLANX));
+        // Without planx, planz goes too: star2d keeps its diagonals
+        assertEquals(SymmetryType.DIAGONAL2D, SymmetryType.STAR2D.withoutPlane(SymmetryType.PLANX));
+        assertEquals(SymmetryType.DIAGONAL3D, SymmetryType.STAR3D.withoutPlane(SymmetryType.PLANZ));
+        assertEquals(SymmetryType.DIAGONAL2D, SymmetryType.DIAGONAL3D.withoutPlane(SymmetryType.PLANY));
+        assertEquals(SymmetryType.PLANZX, SymmetryType.DIAGONAL2D.withoutPlane(SymmetryType.PLANXZ));
         // The last plane leaves nothing
         assertNull(SymmetryType.PLANXZ.withoutPlane(SymmetryType.PLANXZ));
     }

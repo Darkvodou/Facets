@@ -25,6 +25,10 @@ public enum SymmetryType {
     PLANXZ("planxz", false, Transform.SWAP_XZ),
     /** Mirror through the other vertical diagonal plane, x = -z (2 blocks). Command only */
     PLANZX("planzx", false, Transform.SWAP_XZ_REVERSED),
+    /** PLANXZ and PLANZX together: STAR2D without PLANX and PLANZ (4 blocks). Command only */
+    DIAGONAL2D("diagonal2d", false, Transform.SWAP_XZ, Transform.SWAP_XZ_REVERSED),
+    /** DIAGONAL2D mirrored up and down (8 blocks). Command only */
+    DIAGONAL3D("diagonal3d", false, Transform.SWAP_XZ, Transform.SWAP_XZ_REVERSED, Transform.MIRROR_Y),
     /** PLANX and PLANZ together (4 blocks) */
     CROSS2D("cross2d", Transform.MIRROR_X, Transform.MIRROR_Z),
     /** PLANX, PLANY and PLANZ together (8 blocks) */
