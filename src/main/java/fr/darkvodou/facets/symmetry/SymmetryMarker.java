@@ -43,6 +43,8 @@ public final class SymmetryMarker implements Runnable {
         look(SymmetryType.PLANZ, 0x3080ff, square('z'));
         look(SymmetryType.PLANXZ, 0xff69b4, diagonal(1));
         look(SymmetryType.PLANZX, 0x40e0d0, diagonal(-1));
+        look(SymmetryType.DIAGONAL2D, 0xff7f50, diagonal(1), diagonal(-1));
+        look(SymmetryType.DIAGONAL3D, 0xa0a0ff, diagonal(1), diagonal(-1), square('y'));
         look(SymmetryType.CROSS2D, 0xff40ff, square('x'), square('z'));
         look(SymmetryType.CROSS3D, 0xffffff, square('x'), square('y'), square('z'));
         look(SymmetryType.STAR2D, 0xffe000, star());
