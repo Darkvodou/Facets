@@ -12,6 +12,7 @@ import fr.darkvodou.facets.symmetry.SymmetryConfig;
 import fr.darkvodou.facets.symmetry.SymmetryListener;
 import fr.darkvodou.facets.symmetry.SymmetryMarker;
 import fr.darkvodou.facets.symmetry.SymmetrySessions;
+import fr.darkvodou.facets.wand.Farwands;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
@@ -36,6 +37,7 @@ public final class Facets extends JavaPlugin {
     private Gravity gravity;
     private BukkitTask markerTask;
     private MenuListener menu;
+    private Farwands farwands;
 
     @Override
     public void onEnable() {
@@ -64,6 +66,10 @@ public final class Facets extends JavaPlugin {
         menu = new MenuListener(this, symmetries, new MaskFavorites(this), loadMenuItem(new ArrayList<>()));
         listen(menu);
 
+        farwands = new Farwands(this);
+        listen(farwands);
+        farwands.restoreOnline();
+
         commands = new CommandManager(this);
         commands.registerAll(visualizer, loftConfig, symmetries, gravity);
         loadCommandPriority(new ArrayList<>());
@@ -89,6 +95,9 @@ public final class Facets extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (farwands != null) {
+            farwands.saveOnline();
+        }
         if (symmetryListener != null) {
             WorldEdit.getInstance().getEventBus().unregister(symmetryListener);
         }
