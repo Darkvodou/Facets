@@ -98,6 +98,14 @@ public final class SymmetryMarker implements Runnable {
         }
     }
 
+    /**
+     * @return the number of particles drawn for the type, 0 when it has no look (for the tests)
+     */
+    static int points(SymmetryType type) {
+        Look look = LOOKS.get(type);
+        return look == null ? 0 : look.points().size();
+    }
+
     @SafeVarargs
     private static void look(SymmetryType type, int color, List<Vector>... shapes) {
         List<Vector> points = new ArrayList<>();
