@@ -114,4 +114,40 @@ class SymmetryTypeTest {
         SymmetryType.MEGASTAR.transforms().forEach(t -> codes.add(t.code()));
         assertEquals(47, codes.size());
     }
+
+    @Test
+    void listsThePlanesOfEachType() {
+        assertEquals(List.of(), SymmetryType.SIMPLE2D.planes());
+        assertEquals(List.of(SymmetryType.PLANXZ), SymmetryType.PLANXZ.planes());
+        assertEquals(List.of(SymmetryType.PLANX, SymmetryType.PLANZ), SymmetryType.CROSS2D.planes());
+        assertEquals(List.of(SymmetryType.PLANX, SymmetryType.PLANZ, SymmetryType.PLANXZ, SymmetryType.PLANZX),
+                SymmetryType.STAR2D.planes());
+        assertEquals(SymmetryType.planeTypes(), SymmetryType.STAR3D.planes());
+    }
+
+    @Test
+    void addingPlanesGivesTheTypeWithThemAll() {
+        assertEquals(SymmetryType.CROSS2D, SymmetryType.PLANX.withPlane(SymmetryType.PLANZ));
+        assertEquals(SymmetryType.CROSS3D, SymmetryType.CROSS2D.withPlane(SymmetryType.PLANY));
+        assertEquals(SymmetryType.STAR2D, SymmetryType.CROSS2D.withPlane(SymmetryType.PLANXZ));
+        assertEquals(SymmetryType.STAR2D, SymmetryType.PLANXZ.withPlane(SymmetryType.PLANX));
+        assertEquals(SymmetryType.STAR3D, SymmetryType.STAR2D.withPlane(SymmetryType.PLANY));
+        assertEquals(SymmetryType.STAR3D, SymmetryType.CROSS3D.withPlane(SymmetryType.PLANZX));
+        assertEquals(SymmetryType.CROSS2D, SymmetryType.SIMPLE2D.withPlane(SymmetryType.PLANX));
+        // planx and plany together are no type
+        assertNull(SymmetryType.PLANX.withPlane(SymmetryType.PLANY));
+    }
+
+    @Test
+    void removingAPlaneKeepsTheOthers() {
+        assertEquals(SymmetryType.STAR2D, SymmetryType.STAR3D.withoutPlane(SymmetryType.PLANY));
+        assertEquals(SymmetryType.CROSS3D, SymmetryType.STAR3D.withoutPlane(SymmetryType.PLANXZ));
+        assertEquals(SymmetryType.CROSS2D, SymmetryType.STAR2D.withoutPlane(SymmetryType.PLANZX));
+        assertEquals(SymmetryType.CROSS2D, SymmetryType.CROSS3D.withoutPlane(SymmetryType.PLANY));
+        assertEquals(SymmetryType.PLANZ, SymmetryType.CROSS2D.withoutPlane(SymmetryType.PLANX));
+        // Without planx, star2d keeps planz, planxz and planzx: no single type has the most of them
+        assertNull(SymmetryType.STAR2D.withoutPlane(SymmetryType.PLANX));
+        // The last plane leaves nothing
+        assertNull(SymmetryType.PLANXZ.withoutPlane(SymmetryType.PLANXZ));
+    }
 }

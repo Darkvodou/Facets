@@ -78,6 +78,84 @@ public enum SymmetryType {
         return Arrays.stream(values()).filter(type -> type.menu).toList();
     }
 
+    /**
+     * @return the single planes, which //sym add and //sym remove take
+     */
+    public static List<SymmetryType> planeTypes() {
+        return List.of(PLANX, PLANY, PLANZ, PLANXZ, PLANZX);
+    }
+
+    /**
+     * @return whether this type is a single plane
+     */
+    public boolean isPlane() {
+        return planeTypes().contains(this);
+    }
+
+    /**
+     * @return the single planes that this type mirrors through (none for simple2d)
+     */
+    public List<SymmetryType> planes() {
+        return planeTypes().stream().filter(this::hasPlane).toList();
+    }
+
+    /**
+     * @return whether this type mirrors through the given plane
+     */
+    public boolean hasPlane(SymmetryType plane) {
+        return transforms.contains(plane.transforms.get(0));
+    }
+
+    /**
+     * The type made of this one and the plane: planx + planz is cross2d, star2d + plany is star3d.
+     *
+     * @return that type, or null when no type gives exactly these copies
+     */
+    @Nullable
+    public SymmetryType withPlane(SymmetryType plane) {
+        List<Transform> generators = new ArrayList<>(transforms);
+        generators.add(plane.transforms.get(0));
+        Set<Transform> group = Set.copyOf(generate(generators.toArray(Transform[]::new)));
+        for (SymmetryType type : values()) {
+            if (Set.copyOf(type.transforms).equals(group)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The largest type within this one that keeps only its other planes: star3d without plany is star2d,
+     * cross2d without planx is planz. Without one diagonal, the other goes too: star2d without planxz is cross2d.
+     *
+     * @return that type, this one when it has no such plane, or null when no plane is left or no single type
+     * keeps the most of them
+     */
+    @Nullable
+    public SymmetryType withoutPlane(SymmetryType plane) {
+        if (!hasPlane(plane)) {
+            return this;
+        }
+        List<SymmetryType> left = new ArrayList<>(planes());
+        left.remove(plane);
+        SymmetryType best = null;
+        boolean tie = false;
+        for (SymmetryType type : values()) {
+            if (type == this || type.planes().isEmpty() || type.hasPlane(plane)
+                    || !transforms.containsAll(type.transforms) || !left.containsAll(type.planes())) {
+                continue;
+            }
+            int planes = type.planes().size();
+            if (best == null || planes > best.planes().size()) {
+                best = type;
+                tie = false;
+            } else if (planes == best.planes().size()) {
+                tie = true;
+            }
+        }
+        return tie ? null : best;
+    }
+
     @Nullable
     public static SymmetryType fromId(String id) {
         String lower = id.toLowerCase(Locale.ROOT);
