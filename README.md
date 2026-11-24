@@ -14,6 +14,9 @@ A growing toolbox for builders using [FastAsyncWorldEdit](https://github.com/Int
 
 Permissions and configuration: [Installation](https://github.com/Darkvodou/Facets/wiki/Installation), [Configuration](https://github.com/Darkvodou/Facets/wiki/Configuration).
 
+## Addons
+- **FacetsAxiom**: the symmetry also copies the edits made with [Axiom](https://modrinth.com/mod/axiom). Available on [Patreon](https://www.patreon.com/cw/Darkvodou_build).
+
 ## Requirements
 - Paper 1.21+
 - FastAsyncWorldEdit 2.16+
