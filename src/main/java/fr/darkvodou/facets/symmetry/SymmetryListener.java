@@ -5,6 +5,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.registry.state.Property;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
 import fr.darkvodou.facets.FaweExtents;
 import net.kyori.adventure.text.Component;
@@ -24,22 +25,28 @@ import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 
 /**
  * Copies what players with a symmetry change: FAWE edits through {@link SymmetryExtent}, and the blocks placed,
- * broken or written on by hand.
+ * broken, written on or used by hand (doors, levers...).
  */
 public final class SymmetryListener implements Listener {
 
@@ -47,6 +54,8 @@ public final class SymmetryListener implements Listener {
     private final SymmetrySessions sessions;
     // Blocks placed by hand that another plugin copies itself
     private final List<Predicate<BlockPlaceEvent>> ignored = new CopyOnWriteArrayList<>();
+    // Blocks a block was placed against this tick: their change comes from the placement, not from a use
+    private final Set<Block> placedAgainst = new HashSet<>();
 
     public SymmetryListener(Plugin plugin, SymmetrySessions sessions) {
         this.plugin = plugin;
@@ -93,6 +102,10 @@ public final class SymmetryListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent event) {
+        Block against = event.getBlockAgainst();
+        if (placedAgainst.add(against)) {
+            Bukkit.getScheduler().runTask(plugin, () -> placedAgainst.remove(against));
+        }
         Symmetry symmetry = active(event.getPlayer(), event.getBlock().getWorld());
         if (symmetry == null || ignored.stream().anyMatch(filter -> filter.test(event))) {
             return;
@@ -123,6 +136,42 @@ public final class SymmetryListener implements Listener {
                     // With physics, so that the other half of doors and beds goes too
                     target.setType(Material.AIR, true);
                 }
+            }
+        });
+    }
+
+    /**
+     * Copies what a right click changes on a block: a door or a trapdoor opened, a lever pulled, a repeater delay...
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInteract(PlayerInteractEvent event) {
+        Block block = event.getClickedBlock();
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || block == null || event.useInteractedBlock() == Event.Result.DENY) {
+            return;
+        }
+        Symmetry symmetry = active(event.getPlayer(), block.getWorld());
+        if (symmetry == null) {
+            return;
+        }
+        BlockData before = block.getBlockData();
+        // A tick later: the block changes after the event
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            BlockData after = block.getBlockData();
+            if (after.getMaterial() != before.getMaterial() || after.equals(before) || placedAgainst.contains(block)) {
+                return;
+            }
+            com.sk89q.worldedit.world.block.BlockState from = BukkitAdapter.adapt(before);
+            com.sk89q.worldedit.world.block.BlockState to = BukkitAdapter.adapt(after);
+            for (Symmetry.Copy copy : copies(symmetry, block)) {
+                BlockVector3 position = copy.position();
+                Block target = block.getWorld().getBlockAt(position.x(), position.y(), position.z());
+                if (target.getType() != after.getMaterial()) {
+                    continue;
+                }
+                com.sk89q.worldedit.world.block.BlockState changed = changed(BukkitAdapter.adapt(target.getBlockData()),
+                        WorldEditMirror.transform(from, copy.transform()), WorldEditMirror.transform(to, copy.transform()));
+                // With physics, so that the other half of a door follows and the redstone is powered
+                target.setBlockData(BukkitAdapter.adapt(changed), true);
             }
         });
     }
@@ -190,6 +239,21 @@ public final class SymmetryListener implements Listener {
             // With physics, so that the stairs and fences around connect like for a block placed by hand
             target.update(true, true);
         }
+    }
+
+    /**
+     * @return the target with the properties that changed from before to after, the rest of the copy kept as it is
+     */
+    @SuppressWarnings("unchecked")
+    private static com.sk89q.worldedit.world.block.BlockState changed(com.sk89q.worldedit.world.block.BlockState target,
+            com.sk89q.worldedit.world.block.BlockState before, com.sk89q.worldedit.world.block.BlockState after) {
+        com.sk89q.worldedit.world.block.BlockState result = target;
+        for (Map.Entry<Property<?>, Object> entry : after.getStates().entrySet()) {
+            if (!entry.getValue().equals(before.getState(entry.getKey()))) {
+                result = result.with((Property<Object>) entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
     }
 
     /**
